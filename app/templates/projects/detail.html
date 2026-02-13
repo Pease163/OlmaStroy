@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% from "components/_breadcrumbs.html" import breadcrumbs %}
+
+{% block title %}{{ project.meta_title or project.title }}{% endblock %}
+{% block meta_description %}{{ project.meta_description or project.description }}{% endblock %}
+{% block og_title %}{{ project.title }} — ОлмаСтрой{% endblock %}
+{% block og_description %}{{ project.description }}{% endblock %}
+{% block og_image %}{% if project.image_url %}{{ project.image_url }}{% else %}{{ url_for('static', filename='img/og-default.jpg', _external=True) }}{% endif %}{% endblock %}
+
+{% block content %}
+{{ breadcrumbs([
+    {'title': 'Проекты', 'url': url_for('main.projects_list')},
+    {'title': project.title}
+]) }}
+
+{% if project.image_url %}
+<div class="blog-hero">
+    <img src="{{ project.image_url }}" alt="{{ project.title }}" class="blog-hero__img" loading="lazy">
+    <div class="container blog-hero__content">
+        <div class="blog-hero__meta">
+            {% if project.category %}<span>{{ project.category }}</span>{% endif %}
+            {% if project.location %}<span>{{ project.location }}</span>{% endif %}
+            {% if project.year %}<span>{{ project.year }}</span>{% endif %}
+        </div>
+        <h1 style="font-size: clamp(2rem, 5vw, 4rem);">{{ project.title }}</h1>
+    </div>
+</div>
+{% else %}
+<section class="page-hero" style="padding-top: 20px;">
+    <div class="container">
+        <div style="display: flex; gap: 20px; margin-bottom: 20px; font-size: 0.9rem; opacity: 0.7;">
+            {% if project.category %}<span>{{ project.category }}</span>{% endif %}
+            {% if project.location %}<span>{{ project.location }}</span>{% endif %}
+            {% if project.year %}<span>{{ project.year }}</span>{% endif %}
+        </div>
+        <h1 style="font-size: clamp(2rem, 5vw, 4rem);">{{ project.title }}</h1>
+    </div>
+</section>
+{% endif %}
+
+<section style="padding: 80px 0;">
+    <div class="container">
+        <article class="prose">
+            {% if project.content %}
+                {{ project.content | safe }}
+            {% else %}
+                <p>{{ project.description }}</p>
+            {% endif %}
+        </article>
+
+        {% if images %}
+        <div class="project-gallery" style="margin-top: 60px;">
+            {% for img in images %}
+            <div class="project-gallery__item" data-lightbox="{{ loop.index0 }}">
+                <img src="{{ img.image_url }}" alt="{{ img.caption or project.title }}" class="project-gallery__img" loading="lazy">
+                {% if img.caption %}
+                <div class="project-gallery__caption">{{ img.caption }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div style="margin-top: 80px; padding-top: 40px; border-top: 1px solid #eee;">
+            <a href="{{ url_for('main.projects_list') }}" style="color: var(--c-blue); font-weight: 700; text-decoration: none; font-size: 1.1rem;">&larr; Все проекты</a>
+        </div>
+    </div>
+</section>
+
+{% if images %}
+<div class="lightbox" id="lightbox">
+    <button class="lightbox__close" aria-label="Закрыть">&times;</button>
+    <button class="lightbox__nav lightbox__nav--prev" aria-label="Предыдущее">&lsaquo;</button>
+    <button class="lightbox__nav lightbox__nav--next" aria-label="Следующее">&rsaquo;</button>
+    <span class="lightbox__counter"></span>
+    <img class="lightbox__img" src="" alt="">
+    <div class="lightbox__caption"></div>
+</div>
+
+<script>
+(function() {
+    const items = document.querySelectorAll('[data-lightbox]');
+    if (!items.length) return;
+
+    const lb = document.getElementById('lightbox');
+    const img = lb.querySelector('.lightbox__img');
+    const cap = lb.querySelector('.lightbox__caption');
+    const counter = lb.querySelector('.lightbox__counter');
+    const images = Array.from(items).map(el => ({
+        src: el.querySelector('img').src,
+        caption: el.querySelector('.project-gallery__caption')?.textContent || ''
+    }));
+    let current = 0;
+
+    function show(idx) {
+        current = (idx + images.length) % images.length;
+        img.src = images[current].src;
+        cap.textContent = images[current].caption;
+        counter.textContent = (current + 1) + ' / ' + images.length;
+        lb.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function hide() {
+        lb.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    items.forEach(el => el.addEventListener('click', () => show(+el.dataset.lightbox)));
+    lb.querySelector('.lightbox__close').addEventListener('click', hide);
+    lb.querySelector('.lightbox__nav--prev').addEventListener('click', () => show(current - 1));
+    lb.querySelector('.lightbox__nav--next').addEventListener('click', () => show(current + 1));
+    lb.addEventListener('click', e => { if (e.target === lb) hide(); });
+    document.addEventListener('keydown', e => {
+        if (!lb.classList.contains('active')) return;
+        if (e.key === 'Escape') hide();
+        if (e.key === 'ArrowLeft') show(current - 1);
+        if (e.key === 'ArrowRight') show(current + 1);
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

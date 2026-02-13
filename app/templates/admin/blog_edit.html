@@ -1,0 +1,26 @@
+{% extends 'admin/model/edit.html' %}
+
+{% block tail_js %}
+    {{ super() }}
+    <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var el = document.getElementById('content');
+            if (el) {
+                CKEDITOR.replace('content', {
+                    language: 'ru',
+                    height: 400,
+                    removePlugins: 'elementspath',
+                    toolbar: [
+                        { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike'] },
+                        { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Blockquote'] },
+                        { name: 'links', items: ['Link', 'Unlink'] },
+                        { name: 'insert', items: ['Image', 'Table', 'HorizontalRule'] },
+                        { name: 'styles', items: ['Format'] },
+                        { name: 'tools', items: ['Maximize', 'Source'] }
+                    ]
+                });
+            }
+        });
+    </script>
+{% endblock %}

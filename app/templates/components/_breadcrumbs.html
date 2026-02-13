@@ -1,0 +1,21 @@
+{% macro breadcrumbs(items) %}
+<nav class="breadcrumbs-wrapper container" aria-label="Хлебные крошки">
+    <ol class="breadcrumbs" itemscope itemtype="https://schema.org/BreadcrumbList">
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+            <a href="{{ url_for('main.index') }}" itemprop="item"><span itemprop="name">Главная</span></a>
+            <meta itemprop="position" content="1">
+        </li>
+        {% for item in items %}
+            <li aria-hidden="true">/</li>
+            <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                {% if item.url %}
+                    <a href="{{ item.url }}" itemprop="item"><span itemprop="name">{{ item.title }}</span></a>
+                {% else %}
+                    <span class="current" itemprop="name" aria-current="page">{{ item.title }}</span>
+                {% endif %}
+                <meta itemprop="position" content="{{ loop.index + 1 }}">
+            </li>
+        {% endfor %}
+    </ol>
+</nav>
+{% endmacro %}

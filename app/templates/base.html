@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ОлмаСтрой{% endblock %} | Строительство нефтегазовой инфраструктуры</title>
+    <meta name="description" content="{% block meta_description %}ООО ОлмаСтрой — строительство нефтегазовой инфраструктуры{% endblock %}">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ request.url }}">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="{% block og_title %}ОлмаСтрой — Строительство нефтегазовой инфраструктуры{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}ООО ОлмаСтрой — генеральный подрядчик строительства нефтегазовой инфраструктуры с 2006 года{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ url_for('static', filename='img/og-default.jpg', _external=True) }}{% endblock %}">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:site_name" content="ОлмаСтрой">
+    <meta property="og:locale" content="ru_RU">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}ОлмаСтрой — Строительство нефтегазовой инфраструктуры{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}ООО ОлмаСтрой — генеральный подрядчик строительства нефтегазовой инфраструктуры с 2006 года{% endblock %}">
+
+    <!-- JSON-LD Organization -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "ООО ОлмаСтрой",
+        "url": "{{ request.host_url }}",
+        "logo": "{{ url_for('static', filename='img/logo-icon.svg', _external=True) }}",
+        "description": "Генеральный подрядчик строительства нефтегазовой инфраструктуры",
+        "foundingDate": "2006",
+        "taxID": "3917031781",
+        "email": "info@olmastroy.ru",
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "ул. Горького, 81А, ОЦ «Агат», оф. 405-412",
+            "addressLocality": "Калининград",
+            "postalCode": "236029",
+            "addressCountry": "RU"
+        },
+        "contactPoint": [
+            {
+                "@type": "ContactPoint",
+                "telephone": "+7-4012-311-668",
+                "contactType": "customer service",
+                "availableLanguage": "Russian"
+            },
+            {
+                "@type": "ContactPoint",
+                "telephone": "+7-4012-311-669",
+                "contactType": "HR department",
+                "availableLanguage": "Russian"
+            },
+            {
+                "@type": "ContactPoint",
+                "telephone": "+7-4012-697-328",
+                "contactType": "accounting",
+                "availableLanguage": "Russian"
+            }
+        ]
+    }
+    </script>
+    {% block json_ld_extra %}{% endblock %}
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;700;800&family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='img/logo-icon.svg') }}" type="image/svg+xml">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#086EB5">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+
+    <!-- Yandex.Metrika counter -->
+    <script type="text/javascript">
+       (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+       m[i].l=1*new Date();
+       for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+       k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+       (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+       ym(XXXXXXXXX, "init", {
+            clickmap:true,
+            trackLinks:true,
+            accurateTrackBounce:true,
+            webvisor:true
+       });
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/XXXXXXXXX" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    <!-- /Yandex.Metrika counter -->
+</head>
+<body>
+    <!-- Preloader -->
+    <div class="preloader" id="preloader">
+        <div class="preloader__inner">
+            <img src="{{ url_for('static', filename='img/logo-icon.svg') }}" alt="" class="preloader__logo">
+            <span class="preloader__text">ОЛМАСТРОЙ</span>
+        </div>
+    </div>
+    <script>
+        (function() {
+            var p = document.getElementById('preloader');
+            if (!p) return;
+
+            // Show only on first visit per session
+            if (sessionStorage.getItem('olmastroy_visited')) {
+                p.style.display = 'none';
+                return;
+            }
+
+            var hideTimer = setTimeout(function() {
+                // If page loaded fast (< 500ms), hide immediately
+                p.classList.add('loaded');
+                setTimeout(function() { p.style.display = 'none'; }, 600);
+            }, 500);
+
+            window.addEventListener('load', function() {
+                clearTimeout(hideTimer);
+                p.classList.add('loaded');
+                setTimeout(function() { p.style.display = 'none'; }, 600);
+                sessionStorage.setItem('olmastroy_visited', '1');
+            });
+        })();
+    </script>
+
+    <!-- Scroll Progress Bar -->
+    <div class="scroll-progress" id="scrollProgress"></div>
+
+    {% include 'components/_header.html' %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container" style="padding-top: 100px;">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}" role="alert">
+                        {{ message }}
+                        <button type="button" class="flash-message__close" aria-label="Закрыть">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+    {% include 'components/_footer.html' %}
+
+    <!-- Scroll to Top Button -->
+    <button class="scroll-top" id="scrollTop" aria-label="Наверх">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 4L3 11L4.4 12.4L10 6.8L15.6 12.4L17 11L10 4Z" fill="currentColor"/>
+        </svg>
+    </button>
+
+    <!-- Cookie Banner -->
+    <div class="cookie-banner" id="cookieBanner">
+        <p class="cookie-banner__text">Мы используем файлы cookie для улучшения работы сайта. Продолжая использовать сайт, вы соглашаетесь с <a href="#" style="color: var(--c-lime); text-decoration: underline;">политикой конфиденциальности</a>.</p>
+        <button class="btn-main cookie-banner__btn" id="cookieAccept">Принять</button>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/mobile-nav.js') }}"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/sw.js', {scope: '/'}).catch(function(){});
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

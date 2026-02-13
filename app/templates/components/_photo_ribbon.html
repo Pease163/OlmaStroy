@@ -1,0 +1,25 @@
+{% if ribbon_images %}
+<div class="photo-ribbon" aria-hidden="true">
+    <div class="photo-ribbon__track">
+        {% for img in ribbon_images %}
+        <div class="photo-ribbon__item">
+            <picture>
+                <source srcset="{{ img.image_url.replace('.jpg', '.webp') }}" type="image/webp">
+                <img src="{{ img.image_url }}"
+                     alt="" loading="lazy" class="photo-ribbon__img">
+            </picture>
+        </div>
+        {% endfor %}
+        {# Дубликат для бесшовного цикла #}
+        {% for img in ribbon_images %}
+        <div class="photo-ribbon__item">
+            <picture>
+                <source srcset="{{ img.image_url.replace('.jpg', '.webp') }}" type="image/webp">
+                <img src="{{ img.image_url }}"
+                     alt="" loading="lazy" class="photo-ribbon__img">
+            </picture>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}

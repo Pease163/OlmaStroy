@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 214 17% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 214 17% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 214 17% 8%;
+    --primary: 205 93% 37%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 22% 96%;
+    --secondary-foreground: 214 17% 8%;
+    --muted: 210 22% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 73 99% 52%;
+    --accent-foreground: 214 17% 8%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 20% 91%;
+    --input: 210 20% 91%;
+    --ring: 205 93% 37%;
+    --radius: 0.5rem;
+    --sidebar: 205 93% 37%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-active: 73 99% 52%;
+  }
+
+  .dark {
+    --background: 214 17% 8%;
+    --foreground: 210 25% 96%;
+    --card: 214 20% 11%;
+    --card-foreground: 210 25% 96%;
+    --popover: 214 20% 11%;
+    --popover-foreground: 210 25% 96%;
+    --primary: 205 93% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 20% 14%;
+    --secondary-foreground: 210 25% 96%;
+    --muted: 214 20% 14%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 73 99% 52%;
+    --accent-foreground: 214 17% 8%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 25% 96%;
+    --border: 214 20% 18%;
+    --input: 214 20% 18%;
+    --ring: 205 93% 45%;
+    --sidebar: 205 93% 25%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-active: 73 99% 52%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* TipTap editor styles */
+.tiptap-editor .ProseMirror {
+  @apply min-h-[200px] p-4 outline-none;
+}
+
+.tiptap-editor .ProseMirror p {
+  @apply mb-2;
+}
+
+.tiptap-editor .ProseMirror h1 { @apply text-2xl font-bold mb-3; }
+.tiptap-editor .ProseMirror h2 { @apply text-xl font-bold mb-2; }
+.tiptap-editor .ProseMirror h3 { @apply text-lg font-semibold mb-2; }
+
+.tiptap-editor .ProseMirror ul { @apply list-disc pl-6 mb-2; }
+.tiptap-editor .ProseMirror ol { @apply list-decimal pl-6 mb-2; }
+.tiptap-editor .ProseMirror blockquote { @apply border-l-4 border-muted pl-4 italic mb-2; }
+.tiptap-editor .ProseMirror img { @apply max-w-full h-auto rounded; }
+.tiptap-editor .ProseMirror a { @apply text-primary underline; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { @apply bg-muted-foreground/20 rounded-full; }
+::-webkit-scrollbar-thumb:hover { @apply bg-muted-foreground/40; }

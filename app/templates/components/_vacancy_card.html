@@ -1,0 +1,28 @@
+{% macro vacancy_card(vacancy) %}
+<a href="{{ url_for('vacancies.vacancy_detail', vacancy_id=vacancy.id) }}" class="vacancy-card" data-location="{{ vacancy.location }}" aria-label="{{ vacancy.title }}{% if vacancy.location %}, {{ vacancy.location }}{% endif %}">
+    <div>
+        <h3 class="vacancy-card__title">{{ vacancy.title }}</h3>
+        <div class="vacancy-card__meta">
+            {% if vacancy.location %}
+                <span>
+                    <svg class="vacancy-card__meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    {{ vacancy.location }}
+                </span>
+            {% endif %}
+            {% if vacancy.salary %}
+                <span>
+                    <svg class="vacancy-card__meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                    {{ vacancy.salary }}
+                </span>
+            {% endif %}
+            {% if vacancy.employment_type %}
+                <span>
+                    <svg class="vacancy-card__meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    {{ vacancy.employment_type }}
+                </span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="vacancy-card__arrow">&rarr;</div>
+</a>
+{% endmacro %}

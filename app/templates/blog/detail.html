@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% from "components/_breadcrumbs.html" import breadcrumbs %}
+
+{% block title %}{{ post.meta_title or post.title }}{% endblock %}
+{% block meta_description %}{{ post.meta_description or post.excerpt }}{% endblock %}
+
+{% block og_title %}{{ post.title }}{% endblock %}
+{% block og_description %}{{ post.excerpt }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_image %}{% if post.image_url %}{{ post.image_url }}{% else %}{{ url_for('static', filename='img/og-default.jpg', _external=True) }}{% endif %}{% endblock %}
+{% block twitter_title %}{{ post.title }}{% endblock %}
+{% block twitter_description %}{{ post.excerpt }}{% endblock %}
+
+{% block json_ld_extra %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "{{ post.title }}",
+    "description": "{{ post.excerpt }}",
+    {% if post.image_url %}"image": "{{ post.image_url }}",{% endif %}
+    "datePublished": "{{ post.created_at.strftime('%Y-%m-%dT%H:%M:%S') }}",
+    "dateModified": "{{ post.updated_at.strftime('%Y-%m-%dT%H:%M:%S') }}",
+    "author": {
+        "@type": "Organization",
+        "name": "ООО ОлмаСтрой"
+    },
+    "publisher": {
+        "@type": "Organization",
+        "name": "ООО ОлмаСтрой",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "{{ url_for('static', filename='img/logo-icon.svg', _external=True) }}"
+        }
+    }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+{{ breadcrumbs([
+    {'title': 'Блог', 'url': url_for('blog.blog_list')},
+    {'title': post.title}
+]) }}
+
+{% if post.image_url %}
+<div class="blog-hero">
+    <img src="{{ post.image_url }}" alt="{{ post.title }}" class="blog-hero__img" loading="lazy">
+    <div class="container blog-hero__content">
+        <div class="blog-hero__meta">
+            <time datetime="{{ post.created_at.strftime('%Y-%m-%d') }}">{{ post.created_at | ru_date }}</time>
+            <span>{{ post.content | reading_time }} чтения</span>
+        </div>
+        <h1 style="font-size: clamp(2rem, 5vw, 4rem);">{{ post.title }}</h1>
+    </div>
+</div>
+{% else %}
+<section class="page-hero">
+    <div class="container">
+        <div style="display: flex; gap: 20px; margin-bottom: 20px; font-size: 0.9rem; opacity: 0.7;">
+            <time datetime="{{ post.created_at.strftime('%Y-%m-%d') }}">{{ post.created_at | ru_date }}</time>
+            <span>{{ post.content | reading_time }} чтения</span>
+        </div>
+        <h1 style="font-size: clamp(2rem, 5vw, 4rem);">{{ post.title }}</h1>
+    </div>
+</section>
+{% endif %}
+
+<section style="padding: 80px 0;">
+    <div class="container">
+        <article class="prose">
+            {{ post.content | safe }}
+        </article>
+
+        <div style="margin-top: 80px; padding-top: 40px; border-top: 1px solid #eee;">
+            <a href="{{ url_for('blog.blog_list') }}" style="color: var(--c-blue); font-weight: 700; text-decoration: none; font-size: 1.1rem;">&larr; Все статьи</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

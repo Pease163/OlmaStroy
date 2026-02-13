@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% from "components/_breadcrumbs.html" import breadcrumbs %}
+
+{% block title %}{{ vacancy.title }}{% endblock %}
+{% block meta_description %}Вакансия: {{ vacancy.title }} — {{ vacancy.location }}{% endblock %}
+
+{% block og_title %}{{ vacancy.title }} — ОлмаСтрой{% endblock %}
+{% block og_description %}Вакансия: {{ vacancy.title }} — {{ vacancy.location }}{% endblock %}
+{% block twitter_title %}{{ vacancy.title }} — ОлмаСтрой{% endblock %}
+{% block twitter_description %}Вакансия: {{ vacancy.title }} — {{ vacancy.location }}{% endblock %}
+
+{% block json_ld_extra %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    "title": "{{ vacancy.title }}",
+    "datePosted": "{{ vacancy.created_at.strftime('%Y-%m-%dT%H:%M:%S') }}",
+    "description": "{{ vacancy.description | striptags }}",
+    "hiringOrganization": {
+        "@type": "Organization",
+        "name": "ООО ОлмаСтрой",
+        "sameAs": "{{ request.host_url }}"
+    },
+    "jobLocation": {
+        "@type": "Place",
+        "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "{{ vacancy.location }}",
+            "addressCountry": "RU"
+        }
+    }{% if vacancy.employment_type %},
+    "employmentType": "{{ vacancy.employment_type }}"{% endif %}{% if vacancy.salary %},
+    "baseSalary": {
+        "@type": "MonetaryAmount",
+        "currency": "RUB",
+        "value": {
+            "@type": "QuantitativeValue",
+            "value": "{{ vacancy.salary }}"
+        }
+    }{% endif %}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+{{ breadcrumbs([
+    {'title': 'Вакансии', 'url': url_for('vacancies.vacancies_list')},
+    {'title': vacancy.title}
+]) }}
+
+<section class="page-hero" style="padding-top: 80px;">
+    <div class="container">
+        <h1 class="reveal" style="font-size: clamp(2rem, 5vw, 4rem);">{{ vacancy.title }}</h1>
+        <div class="vd-tags">
+            {% if vacancy.location %}
+                <span class="vd-tag">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    {{ vacancy.location }}
+                </span>
+            {% endif %}
+            {% if vacancy.salary %}
+                <span class="vd-tag">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                    {{ vacancy.salary }}
+                </span>
+            {% endif %}
+            {% if vacancy.employment_type %}
+                <span class="vd-tag">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    {{ vacancy.employment_type }}
+                </span>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<section style="padding: 80px 0;">
+    <div class="container">
+        <div class="vacancy-detail">
+            <div>
+                {% if vacancy.description %}
+                    <div class="vd-section">
+                        <div class="prose">
+                            <h2>Описание</h2>
+                            {{ vacancy.description | safe }}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if vacancy.requirements %}
+                    <div class="vd-section">
+                        <div class="prose">
+                            <h2>Требования</h2>
+                            {{ vacancy.requirements | safe }}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="vacancy-sidebar">
+                <form id="vacancyForm" novalidate>
+                    <h3>Откликнуться</h3>
+                    <div class="form-group">
+                        <label for="vacancy-name" class="sr-only">Ваше имя</label>
+                        <input type="text" name="name" id="vacancy-name" placeholder="Ваше имя" required aria-required="true">
+                        <span class="form-error" aria-live="polite"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="vacancy-phone" class="sr-only">Телефон</label>
+                        <input type="tel" name="phone" id="vacancy-phone" placeholder="+7 (___) ___-__-__" required aria-required="true">
+                        <span class="form-error" aria-live="polite"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="vacancy-email" class="sr-only">Email</label>
+                        <input type="email" name="email" id="vacancy-email" placeholder="Email">
+                        <span class="form-error" aria-live="polite"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="vacancy-message" class="sr-only">Сопроводительное письмо</label>
+                        <textarea name="message" id="vacancy-message" placeholder="Сопроводительное письмо" rows="3" style="resize: vertical;"></textarea>
+                    </div>
+                    <button type="submit" class="btn-main">Отправить</button>
+                    <div class="form-response" id="vacancyResponse"></div>
+                    <p class="form-hint">Нажимая «Отправить», вы соглашаетесь на обработку персональных данных</p>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('vacancyForm');
+    const responseDiv = document.getElementById('vacancyResponse');
+
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const data = {
+                name: formData.get('name'),
+                phone: formData.get('phone'),
+                email: formData.get('email'),
+                subject: 'Отклик на вакансию: {{ vacancy.title }}',
+                message: formData.get('message') || ''
+            };
+
+            try {
+                const res = await fetch('/api/contact', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                responseDiv.classList.add('show');
+                if (res.ok) {
+                    responseDiv.className = 'form-response show success';
+                    responseDiv.style.color = '#fff';
+                    responseDiv.textContent = result.message || 'Отклик отправлен! Мы свяжемся с вами.';
+                    form.reset();
+                } else {
+                    responseDiv.className = 'form-response show error';
+                    responseDiv.textContent = result.error || 'Произошла ошибка. Попробуйте позже.';
+                }
+            } catch (err) {
+                responseDiv.className = 'form-response show error';
+                responseDiv.textContent = 'Ошибка сети. Проверьте подключение.';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

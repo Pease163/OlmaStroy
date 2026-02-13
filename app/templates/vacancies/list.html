@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% from "components/_breadcrumbs.html" import breadcrumbs %}
+{% from "components/_vacancy_card.html" import vacancy_card %}
+
+{% block title %}Вакансии{% endblock %}
+{% block meta_description %}Вакансии ООО ОлмаСтрой — присоединяйтесь к команде профессионалов{% endblock %}
+
+{% block content %}
+{{ breadcrumbs([{'title': 'Вакансии'}]) }}
+
+<section class="page-hero">
+    <div class="container">
+        <h1 class="reveal">Вакансии</h1>
+        <p class="reveal">Присоединяйтесь к команде профессионалов</p>
+    </div>
+</section>
+
+<section style="padding: 80px 0; background: var(--c-gray);">
+    <div class="container">
+        {% if vacancies %}
+            <div class="filter-tags" id="filterTags">
+                <button class="filter-tag active" data-filter="all">Все</button>
+                {% for loc in locations %}
+                    {% if loc %}
+                        <button class="filter-tag" data-filter="{{ loc }}">{{ loc }}</button>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <p style="color: #999; margin-bottom: 30px;" id="vacancyCounter">Найдено {{ vacancies|length }} вакансий</p>
+
+            <div id="vacancyList">
+                {% for vacancy in vacancies %}
+                    {{ vacancy_card(vacancy) }}
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state__icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                </div>
+                <h3 class="empty-state__title">Нет открытых вакансий</h3>
+                <p class="empty-state__text">Следите за обновлениями</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+<!-- DOCUMENTS -->
+<section style="padding: 80px 0;">
+    <div class="container">
+        <h2 class="reveal" style="font-family: var(--font-head); font-size: 3rem; text-transform: uppercase; margin-bottom: 20px; color: var(--c-dark);">Документы при приёме на работу</h2>
+        <p class="reveal" style="color: #666; margin-bottom: 60px; font-size: 1.1rem;">Для оформления трудоустройства необходимо предоставить следующие документы</p>
+
+        <div class="docs-grid">
+            <div class="doc-item reveal">
+                <span class="doc-item__num">01</span>
+                <span>Трудовая книжка</span>
+            </div>
+            <div class="doc-item reveal">
+                <span class="doc-item__num">02</span>
+                <span>Паспорт с пропиской</span>
+            </div>
+            <div class="doc-item reveal">
+                <span class="doc-item__num">03</span>
+                <span>СНИЛС</span>
+            </div>
+            <div class="doc-item reveal">
+                <span class="doc-item__num">04</span>
+                <span>ИНН</span>
+            </div>
+            <div class="doc-item reveal">
+                <span class="doc-item__num">05</span>
+                <span>Военный билет</span>
+            </div>
+            <div class="doc-item reveal">
+                <span class="doc-item__num">06</span>
+                <span>Документ об образовании / квалификации</span>
+            </div>
+            <div class="doc-item reveal">
+                <span class="doc-item__num">07</span>
+                <span>Водительское удостоверение + карта тахографа <em style="opacity: 0.6;">(для водителей)</em></span>
+            </div>
+            <div class="doc-item reveal">
+                <span class="doc-item__num">08</span>
+                <span>Заключение мед. осмотра <em style="opacity: 0.6;">(при необходимости)</em></span>
+            </div>
+            <div class="doc-item reveal">
+                <span class="doc-item__num">09</span>
+                <span>Контактный телефон</span>
+            </div>
+            <div class="doc-item reveal">
+                <span class="doc-item__num">10</span>
+                <span>Реквизиты банковской карты</span>
+            </div>
+        </div>
+
+        <p class="reveal" style="color: #999; font-size: 0.9rem; margin-top: 30px;">При отсутствии какого-либо документа организация вправе отказать в трудоустройстве.</p>
+    </div>
+</section>
+
+<!-- HR CONTACTS -->
+<section style="background: var(--c-dark); padding: 80px 0; color: var(--c-white);">
+    <div class="container">
+        <h2 class="reveal" style="font-family: var(--font-head); font-size: 3rem; text-transform: uppercase; margin-bottom: 60px;">Отдел кадров</h2>
+
+        <div class="hr-contacts-grid">
+            <div class="reveal">
+                <span style="opacity: 0.5; display: block; font-size: 0.9rem; margin-bottom: 8px;">Часы работы</span>
+                <b style="font-size: 1.1rem;">Пн-Пт, 10:00-18:00 (МСК)</b>
+            </div>
+            <div class="reveal">
+                <span style="opacity: 0.5; display: block; font-size: 0.9rem; margin-bottom: 8px;">Телефон</span>
+                <a href="tel:+74012311669" style="font-size: 1.1rem; font-weight: 700; color: var(--c-lime); text-decoration: none;">+7 (4012) 311-669</a><br>
+                <span style="opacity: 0.5; font-size: 0.9rem;">WhatsApp: </span>
+                <a href="https://wa.me/79097780472" style="color: var(--c-white); text-decoration: none; font-size: 0.95rem;">8-909-778-04-72</a>
+            </div>
+            <div class="reveal">
+                <span style="opacity: 0.5; display: block; font-size: 0.9rem; margin-bottom: 8px;">Email</span>
+                <a href="mailto:info@olmastroy.ru" style="font-size: 1.1rem; font-weight: 700; color: var(--c-white); text-decoration: none;">info@olmastroy.ru</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const filterTags = document.querySelectorAll('.filter-tag');
+    const vacancyCards = document.querySelectorAll('.vacancy-card');
+    const counter = document.getElementById('vacancyCounter');
+
+    filterTags.forEach(tag => {
+        tag.addEventListener('click', () => {
+            filterTags.forEach(t => t.classList.remove('active'));
+            tag.classList.add('active');
+
+            const filter = tag.getAttribute('data-filter');
+            let visibleCount = 0;
+
+            vacancyCards.forEach(card => {
+                const location = card.getAttribute('data-location');
+                if (filter === 'all' || location === filter) {
+                    card.style.display = '';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            if (counter) {
+                counter.textContent = 'Найдено ' + visibleCount + ' вакансий';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

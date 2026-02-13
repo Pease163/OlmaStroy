@@ -1,0 +1,328 @@
+{% extends "base.html" %}
+
+{% block title %}Главная{% endblock %}
+{% block meta_description %}ООО ОлмаСтрой — строительство нефтегазовой инфраструктуры. Генеральный подрядчик с 2006 года.{% endblock %}
+
+{% block content %}
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-bg"></div>
+    <div class="container hero-content">
+        <div class="hero-tags reveal">
+            <span class="tag">С 2006 года</span>
+            <span class="tag">Генеральный подрядчик</span>
+            <span class="tag">Нефтегаз</span>
+        </div>
+        <h1 class="reveal">Энергия<br>Сложных<br><span class="text-lime">Решений</span></h1>
+        <br>
+        <a href="#projects" class="btn-main reveal">Наши объекты</a>
+    </div>
+</section>
+
+<!-- TICKER -->
+{% include 'components/_ticker.html' %}
+
+<!-- ABOUT -->
+<section id="about" class="about">
+    <div class="container about-grid">
+        <div class="reveal">
+            <h2>Надежность<br>на каждом<br>километре</h2>
+            <div class="about-line"></div>
+        </div>
+        <div class="reveal">
+            <p>ООО &laquo;ОлмаСтрой&raquo; — ключевой игрок на рынке строительства нефтегазовой инфраструктуры. Мы работаем там, где другим сложно: от вечной мерзлоты Ямала до балтийского побережья.</p>
+            <p>Полный цикл работ: от получения исходно-разрешительной документации до сдачи объекта &laquo;под ключ&raquo;. Собственный парк техники и членство в СРО ОСГиНК.</p>
+
+            <div class="stats-row">
+                <div class="stat-item">
+                    <h3 data-count="19">0</h3>
+                    <span>Лет опыта</span>
+                </div>
+                <div class="stat-item">
+                    <h3 data-count="100" data-suffix="%">0</h3>
+                    <span>Соблюдение сроков</span>
+                </div>
+                <div class="stat-item">
+                    <h3 data-count="8">0</h3>
+                    <span>Регионов РФ</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects" class="projects">
+    <div class="container">
+        <div class="section-header reveal">
+            <h2>Ключевые объекты</h2>
+        </div>
+
+        <div class="project-list">
+            {% if projects %}
+                {% for project in projects %}
+                <div class="project-card reveal">
+                    {% if loop.index is odd %}
+                        {% if project.image_url %}
+                            <img src="{{ project.image_url }}" class="p-img" alt="{{ project.title }}" loading="lazy">
+                        {% else %}
+                            <div class="p-img p-img--placeholder"></div>
+                        {% endif %}
+                        <div class="p-info">
+                            <div class="p-meta">{{ project.location }}</div>
+                            <h3>{{ project.title }}</h3>
+                            <p class="p-desc">{{ project.description }}</p>
+                        </div>
+                    {% else %}
+                        <div class="p-info">
+                            <div class="p-meta">{{ project.location }}</div>
+                            <h3>{{ project.title }}</h3>
+                            <p class="p-desc">{{ project.description }}</p>
+                        </div>
+                        {% if project.image_url %}
+                            <img src="{{ project.image_url }}" class="p-img" alt="{{ project.title }}" loading="lazy">
+                        {% else %}
+                            <div class="p-img p-img--placeholder"></div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- Fallback projects -->
+                <div class="project-card reveal">
+                    <picture>
+                        <source srcset="{{ url_for('static', filename='img/projects/yamal.webp') }}" type="image/webp">
+                        <img src="{{ url_for('static', filename='img/projects/yamal.jpg') }}" class="p-img" alt="Ямал" loading="lazy">
+                    </picture>
+                    <div class="p-info">
+                        <div class="p-meta">ЯНАО, п-ов Ямал</div>
+                        <h3>КС &laquo;Байдарацкая&raquo;</h3>
+                        <p class="p-desc">Участие в строительстве самой северной в мире компрессорной станции. Работа в условиях экстремально низких температур.</p>
+                    </div>
+                </div>
+                <div class="project-card reveal">
+                    <div class="p-info">
+                        <div class="p-meta">Иркутская область</div>
+                        <h3>Сила Сибири</h3>
+                        <p class="p-desc">Участок &laquo;Ковыкта — Чаянда&raquo;. Строительство магистрального газопровода, обеспечивающего экспортный потенциал страны.</p>
+                    </div>
+                    <picture>
+                        <source srcset="{{ url_for('static', filename='img/projects/pipeline.webp') }}" type="image/webp">
+                        <img src="{{ url_for('static', filename='img/projects/pipeline.jpg') }}" class="p-img" alt="Трубопровод" loading="lazy">
+                    </picture>
+                </div>
+                <div class="project-card reveal">
+                    <picture>
+                        <source srcset="{{ url_for('static', filename='img/projects/phg.webp') }}" type="image/webp">
+                        <img src="{{ url_for('static', filename='img/projects/phg.jpg') }}" class="p-img" alt="ПХГ" loading="lazy">
+                    </picture>
+                    <div class="p-info">
+                        <div class="p-meta">Калининградская область</div>
+                        <h3>Подземное хранилище газа</h3>
+                        <p class="p-desc">Расширение мощностей Калининградского ПХГ и строительство ГРС Светлогорск для обеспечения энергобезопасности региона.</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- PHOTO RIBBON -->
+{% include 'components/_photo_ribbon.html' %}
+
+<!-- SERVICES -->
+<section id="services" class="services">
+    <div class="container">
+        <h2 class="reveal section-title--mb60">Компетенции</h2>
+
+        <div class="service-list">
+            {% for service in services %}
+            <div class="service-item reveal" data-accordion>
+                <div class="service-header">
+                    <h3>{{ '%02d' | format(loop.index) }} / {{ service.title }}</h3>
+                    <div class="service-arrow">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M6 9L12 15L18 9"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="service-body">
+                    <p>{{ service.description }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- BLOG -->
+{% if latest_posts %}
+{% from "components/_blog_card.html" import blog_card %}
+<section id="blog" class="projects">
+    <div class="container">
+        <div class="section-header section-header--flex reveal">
+            <h2>Новости и статьи</h2>
+            <a href="{{ url_for('blog.blog_list') }}" class="btn-main btn-main--inline">Все статьи &rarr;</a>
+        </div>
+        <div class="blog-grid">
+            {% for post in latest_posts %}
+                <div class="reveal">
+                    {{ blog_card(post) }}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- TESTIMONIALS -->
+{% if testimonials %}
+<section class="section--gray-bg">
+    <div class="container">
+        <h2 class="section-title--dark reveal">Отзывы заказчиков</h2>
+
+        <div class="testimonials-carousel reveal" id="testimonialCarousel">
+            <div class="testimonials-track">
+                {% for t in testimonials %}
+                <div class="testimonial-card">
+                    <div class="testimonial-card__stars">
+                        {% for i in range(t.rating) %}
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--c-lime)" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        {% endfor %}
+                    </div>
+                    <p class="testimonial-card__text">&laquo;{{ t.text }}&raquo;</p>
+                    <div class="testimonial-card__author">
+                        {% if t.image_url %}
+                        <img src="{{ t.image_url }}" alt="{{ t.company_name }}" class="testimonial-card__avatar" loading="lazy">
+                        {% else %}
+                        <div class="testimonial-card__avatar-placeholder">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <strong>{{ t.company_name }}</strong>
+                            {% if t.author %}<span>{{ t.author }}</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if testimonials | length > 3 %}
+            <div class="testimonials-nav">
+                <button class="testimonials-nav__btn" data-dir="prev" aria-label="Предыдущий">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <button class="testimonials-nav__btn" data-dir="next" aria-label="Следующий">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- CONTACTS -->
+<section id="contacts" class="contacts">
+    <div class="container contact-grid">
+        <div class="reveal">
+            <h2>Готовы к<br>сотрудничеству</h2>
+            <p class="contacts__text">Мы открыты для новых проектов и партнерства. Заполните форму, и мы свяжемся с вами.</p>
+
+            <div class="contacts__details">
+                <div class="contacts__detail">
+                    <span class="contacts__label">Центральный офис</span>
+                    <b class="contacts__value">г. Калининград, ул. Горького, 81А</b><br>
+                    <span class="contacts__address-extra">ОЦ &laquo;Агат&raquo;, оф. 405-412</span>
+                </div>
+                <div class="contacts__detail">
+                    <span class="contacts__label">Телефон</span>
+                    <a href="tel:+74012311668" class="contacts__value contacts__value--lime">+7 (4012) 311-668</a>
+                </div>
+                <div class="contacts__detail">
+                    <span class="contacts__label">Отдел кадров</span>
+                    <a href="tel:+74012311669" class="contacts__value contacts__value--white contacts__value--sm">+7 (4012) 311-669</a>
+                </div>
+                <div class="contacts__detail">
+                    <span class="contacts__label">Бухгалтерия</span>
+                    <a href="tel:+74012697328" class="contacts__value contacts__value--white contacts__value--sm">+7 (4012) 697-328</a>
+                </div>
+                <div class="contacts__detail">
+                    <span class="contacts__label">Email</span>
+                    <a href="mailto:info@olmastroy.ru" class="contacts__value contacts__value--white">info@olmastroy.ru</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-box reveal">
+            <form id="contactForm" novalidate>
+                <div>
+                    <label for="contact-name" class="sr-only">Ваше имя</label>
+                    <input type="text" name="name" id="contact-name" placeholder="Ваше имя" required aria-required="true">
+                    <span class="form-error" aria-live="polite"></span>
+                </div>
+                <div>
+                    <label for="contact-phone" class="sr-only">Телефон</label>
+                    <input type="tel" name="phone" id="contact-phone" placeholder="+7 (___) ___-__-__" required aria-required="true">
+                    <span class="form-error" aria-live="polite"></span>
+                </div>
+                <div>
+                    <label for="contact-email" class="sr-only">Email</label>
+                    <input type="email" name="email" id="contact-email" placeholder="Email корпоративный">
+                    <span class="form-error" aria-live="polite"></span>
+                </div>
+                <div>
+                    <label for="contact-subject" class="sr-only">Тема обращения</label>
+                    <select name="subject" id="contact-subject">
+                        <option value="Предложение о сотрудничестве">Предложение о сотрудничестве</option>
+                        <option value="Тендер">Тендер</option>
+                        <option value="Вакансии">Вакансии</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-main btn-main--full">Отправить заявку</button>
+                <div class="form-response" id="contactResponse"></div>
+                <p class="contacts__disclaimer">Нажимая кнопку, вы соглашаетесь с обработкой персональных данных. Мы зарегистрированы в Роскомнадзоре.</p>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/contact-form.js') }}"></script>
+{% if testimonials and testimonials | length > 3 %}
+<script>
+(function() {
+    const carousel = document.getElementById('testimonialCarousel');
+    if (!carousel) return;
+
+    const track = carousel.querySelector('.testimonials-track');
+    const cards = track.children;
+    let idx = 0;
+
+    function getVisible() {
+        const w = window.innerWidth;
+        if (w <= 768) return 1;
+        if (w <= 1024) return 2;
+        return 3;
+    }
+
+    function slide() {
+        const visible = getVisible();
+        const max = Math.max(0, cards.length - visible);
+        if (idx > max) idx = max;
+        if (idx < 0) idx = 0;
+        const card = cards[0];
+        const gap = parseInt(getComputedStyle(track).gap) || 30;
+        const offset = idx * (card.offsetWidth + gap);
+        track.style.transform = 'translateX(-' + offset + 'px)';
+    }
+
+    carousel.querySelector('[data-dir="prev"]').addEventListener('click', function() { idx--; slide(); });
+    carousel.querySelector('[data-dir="next"]').addEventListener('click', function() { idx++; slide(); });
+    window.addEventListener('resize', slide);
+})();
+</script>
+{% endif %}
+{% endblock %}

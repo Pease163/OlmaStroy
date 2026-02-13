@@ -1,0 +1,36 @@
+<header role="banner">
+    <a href="{{ url_for('main.index') }}" class="logo" aria-label="ОлмаСтрой — на главную">
+        <img src="{{ url_for('static', filename='img/logo-icon.svg') }}" alt="ОлмаСтрой" class="logo-icon">
+        <span class="logo-text">ОЛМАСТРОЙ</span>
+    </a>
+    <nav role="navigation" aria-label="Основная навигация">
+        <ul>
+            <li><a href="{{ url_for('main.about') }}">О нас</a></li>
+            <li><a href="{{ url_for('main.projects_list') }}">Проекты</a></li>
+            <li><a href="{{ url_for('main.index') }}#services">Услуги</a></li>
+            <li><a href="{{ url_for('main.documents') }}">Документы</a></li>
+            <li><a href="{{ url_for('main.equipment_list') }}">Техника</a></li>
+            <li><a href="{{ url_for('blog.blog_list') }}">Блог</a></li>
+            <li><a href="{{ url_for('vacancies.vacancies_list') }}">Вакансии</a></li>
+            <li><a href="{{ url_for('main.index') }}#contacts">Контакты</a></li>
+        </ul>
+    </nav>
+    <button class="hamburger" aria-label="Открыть меню" aria-expanded="false" aria-controls="mobileNav">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+</header>
+
+<div class="mobile-nav" id="mobileNav" role="navigation" aria-label="Мобильная навигация">
+    <ul>
+        <li><a href="{{ url_for('main.about') }}">О нас</a></li>
+        <li><a href="{{ url_for('main.projects_list') }}">Проекты</a></li>
+        <li><a href="{{ url_for('main.index') }}#services">Услуги</a></li>
+        <li><a href="{{ url_for('main.documents') }}">Документы</a></li>
+        <li><a href="{{ url_for('main.equipment_list') }}">Техника</a></li>
+        <li><a href="{{ url_for('blog.blog_list') }}">Блог</a></li>
+        <li><a href="{{ url_for('vacancies.vacancies_list') }}">Вакансии</a></li>
+        <li><a href="{{ url_for('main.index') }}#contacts">Контакты</a></li>
+    </ul>
+</div>

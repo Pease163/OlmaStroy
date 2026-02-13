@@ -1,0 +1,23 @@
+{% macro project_card(project) %}
+<article class="project-grid-card">
+    <a href="{{ url_for('main.project_detail', slug=project.slug) }}" class="project-grid-card__link">
+        {% if project.image_url %}
+            <img src="{{ project.image_url }}" alt="{{ project.title }}" class="project-grid-card__img" loading="lazy">
+        {% else %}
+            <div class="project-grid-card__placeholder">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </div>
+        {% endif %}
+        <div class="project-grid-card__body">
+            {% if project.category %}
+                <span class="project-grid-card__category">{{ project.category }}</span>
+            {% endif %}
+            <h3 class="project-grid-card__title">{{ project.title }}</h3>
+            <div class="project-grid-card__meta">
+                {% if project.location %}<span>{{ project.location }}</span>{% endif %}
+                {% if project.year %}<span>{{ project.year }}</span>{% endif %}
+            </div>
+        </div>
+    </a>
+</article>
+{% endmacro %}

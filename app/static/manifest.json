@@ -1,0 +1,26 @@
+{
+  "name": "ОлмаСтрой — Строительство нефтегазовой инфраструктуры",
+  "short_name": "ОлмаСтрой",
+  "description": "Генеральный подрядчик строительства нефтегазовой инфраструктуры с 2006 года",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111418",
+  "theme_color": "#086EB5",
+  "icons": [
+    {
+      "src": "/static/img/logo-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/static/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

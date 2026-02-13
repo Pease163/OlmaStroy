@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% from "components/_breadcrumbs.html" import breadcrumbs %}
+
+{% block title %}Техника{% endblock %}
+{% block meta_description %}Парк строительной и специальной техники ООО ОлмаСтрой{% endblock %}
+
+{% block content %}
+{{ breadcrumbs([{'title': 'Техника'}]) }}
+
+<section class="page-hero">
+    <div class="container">
+        <h1 class="reveal">Техника</h1>
+        <p class="reveal">Собственный парк строительной и специальной техники</p>
+    </div>
+</section>
+
+<section class="section--default">
+    <div class="container">
+        {% if categories %}
+        <div class="filter-tags reveal">
+            <a href="{{ url_for('main.equipment_list') }}" class="filter-tag {{ 'active' if not active_category }}">Все</a>
+            {% for cat in categories %}
+            <a href="{{ url_for('main.equipment_list', category=cat) }}" class="filter-tag {{ 'active' if active_category == cat }}">{{ cat }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="projects-grid">
+            {% for item in equipment %}
+            <div class="project-grid-card reveal">
+                {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.name }}" class="project-grid-card__img" loading="lazy">
+                {% else %}
+                <div class="project-grid-card__placeholder">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                </div>
+                {% endif %}
+                <div class="project-grid-card__body">
+                    {% if item.category %}
+                    <span class="project-grid-card__category">{{ item.category }}</span>
+                    {% endif %}
+                    <h3 class="project-grid-card__title">{{ item.name }}</h3>
+                    {% if item.description %}
+                    <p style="color: #666; font-size: 0.9rem; line-height: 1.5;">{{ item.description[:150] }}{% if item.description|length > 150 %}...{% endif %}</p>
+                    {% endif %}
+                    {% if not item.is_available %}
+                    <span style="color: #e74c3c; font-size: 0.85rem; font-weight: 700; margin-top: 10px; display: inline-block;">Недоступно</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if not equipment %}
+        <div class="empty-state">
+            <div class="empty-state__icon">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg>
+            </div>
+            <h3 class="empty-state__title">Техника не найдена</h3>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
