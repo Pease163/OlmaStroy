@@ -30,15 +30,23 @@ instance/
 
 # Uploads
 uploads/
+!app/static/uploads/
 app/static/uploads/*
 !app/static/uploads/.gitkeep
+!app/static/uploads/documents/
+!app/static/uploads/documents/*.pdf
 
 # OS
 .DS_Store
 Thumbs.db
 
 # Flask
-migrations/
+migrations/*
+!migrations/versions/
+migrations/versions/*
+!migrations/versions/d0f1a7c2e8c4_add_is_featured_to_documents.py
+migrations/__pycache__/
+migrations/versions/__pycache__/
 
 # Admin panel (React)
 admin-panel/node_modules/

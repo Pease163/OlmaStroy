@@ -9,6 +9,7 @@ export interface Document {
   category: string | null
   order: number
   is_visible: boolean
+  is_featured: boolean
   created_at: string
 }
 

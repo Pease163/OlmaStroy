@@ -1,92 +1,137 @@
-# Деплой и инфраструктура
+# Деплой И Инфраструктура
 
-## Локальное развёртывание
+Документ описывает текущий рабочий способ запуска проекта. Он опирается на реальную конфигурацию `config.py`, а не на устаревшие настройки.
 
-### Пошаговая инструкция
+## Локальный Запуск
+
+### Backend
 
 ```bash
-# 1. Клонировать репозиторий
-git clone <repository-url>
-cd ОлмаСТРОЙ
-
-# 2. Создать виртуальное окружение
-python3 -m venv venv
-source venv/bin/activate    # macOS/Linux
-# venv\Scripts\activate     # Windows
-
-# 3. Установить зависимости
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-
-# 4. Создать файл .env (или использовать существующий)
-cat > .env << 'EOF'
-SECRET_KEY=dev-secret-key-olmastroy-2024
-DATABASE_URL=sqlite:///olmastroy.db
-FLASK_APP=run.py
-FLASK_DEBUG=1
-EOF
-
-# 5. Заполнить базу данных начальными данными
 python seed.py
-
-# 6. Запустить dev-сервер
 python run.py
 ```
 
-Сайт будет доступен: **http://localhost:5001**
+Backend будет доступен на `http://localhost:5001`.
 
-Админ-панель: **http://localhost:5001/admin** (admin / admin123)
+### React SPA
 
-## Переменные окружения
-
-Файл `.env` в корне проекта. Загружается через `python-dotenv`.
-
-| Переменная | Значение по умолчанию | Описание |
-|-----------|----------------------|----------|
-| `SECRET_KEY` | `fallback-secret-key` | Секретный ключ Flask (сессии, CSRF) |
-| `DATABASE_URL` | `sqlite:///olmastroy.db` | URI базы данных |
-| `FLASK_APP` | — | Точка входа Flask (`run.py`) |
-| `FLASK_DEBUG` | — | Режим отладки (`1` = включён) |
-
-> **Важно:** В production обязательно установите уникальный `SECRET_KEY` (минимум 32 символа).
-
-## Конфигурация приложения
-
-Файл `config.py`:
-
-| Параметр | Значение | Описание |
-|---------|---------|----------|
-| `UPLOAD_FOLDER` | `app/static/uploads` | Папка для загруженных файлов |
-| `MAX_CONTENT_LENGTH` | 16 MB | Максимальный размер загрузки |
-| `CKEDITOR_SERVE_LOCAL` | `True` | Использовать локальные ресурсы CKEditor |
-| `CKEDITOR_HEIGHT` | 400 | Высота редактора в пикселях |
-| `CKEDITOR_LANGUAGE` | `ru` | Язык интерфейса CKEditor |
-| `FLASK_ADMIN_SWATCH` | `cosmo` | Тема Bootstrap для Flask-Admin |
-
-## Порт
-
-Dev-сервер запускается на порту **5001** (задан в `run.py`).
-
-```python
-app.run(debug=True, port=5001)
+```bash
+cd admin-panel
+npm install
+npm run dev
 ```
 
-## Production-рекомендации
+SPA dev-режим будет доступен на `http://localhost:5173/panel/`.
 
-### WSGI-сервер
+Vite проксирует `/api` на `http://127.0.0.1:5001`, поэтому backend должен быть запущен параллельно.
 
-Заменить dev-сервер Werkzeug на Gunicorn:
+## Production-Сборка SPA
+
+```bash
+cd admin-panel
+npm run build
+```
+
+Сборка попадает в:
+
+```text
+app/static/panel/
+```
+
+После этого Flask начинает обслуживать `/panel/` и вложенные маршруты напрямую из собранного bundle.
+
+## Переменные Окружения
+
+`config.py` поддерживает следующие ключевые переменные:
+
+| Переменная | По умолчанию | Назначение |
+|-----------|--------------|------------|
+| `ENVIRONMENT` | `development` | Управляет secure cookie и production-ветками |
+| `SECRET_KEY` | случайный `os.urandom(32).hex()` | Flask sessions |
+| `DATABASE_URL` | `sqlite:///.../olmastroy.db` | Подключение к БД |
+| `JWT_SECRET_KEY` | случайный `os.urandom(32).hex()` | Подпись JWT |
+| `CORS_ORIGINS` | `http://localhost:5173` | Разрешённые origins для admin API |
+| `MAIL_SERVER` | `smtp.yandex.ru` | SMTP host |
+| `MAIL_PORT` | `465` | SMTP port |
+| `MAIL_USE_SSL` | `true` | SSL для почты |
+| `MAIL_USERNAME` | пусто | SMTP login |
+| `MAIL_PASSWORD` | пусто | SMTP password |
+| `MAIL_DEFAULT_SENDER` | `noreply@olmastroy.ru` | Sender address |
+| `MAIL_RECIPIENT` | `info@olmastroy.ru` | Получатель заявок с сайта |
+
+### App-Specific Defaults
+
+Дополнительно заданы:
+
+- `MAX_CONTENT_LENGTH=16MB`;
+- `AUTH_RATE_LIMIT=10/minute`;
+- `RATELIMIT_DEFAULT=200/hour`;
+- `JWT_ACCESS_TOKEN_EXPIRES=15 minutes`;
+- `JWT_REFRESH_TOKEN_EXPIRES=7 days`;
+- `JWT_TOKEN_LOCATION=['headers', 'cookies']`;
+- `UPLOAD_FOLDER=app/static/uploads`;
+- `SEARCH_RESULT_LIMIT=5`;
+- `DASHBOARD_MONTHS=12`;
+- `TOTP_ISSUER=ОлмаСТРОЙ Админ`.
+
+## Файл `.env`
+
+Минимальный пример:
+
+```env
+ENVIRONMENT=development
+SECRET_KEY=change-me
+JWT_SECRET_KEY=change-me-too
+DATABASE_URL=sqlite:///olmastroy.db
+CORS_ORIGINS=http://localhost:5173
+MAIL_SERVER=smtp.yandex.ru
+MAIL_PORT=465
+MAIL_USE_SSL=true
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_DEFAULT_SENDER=noreply@olmastroy.ru
+MAIL_RECIPIENT=info@olmastroy.ru
+```
+
+## Топология Запуска
+
+### Development
+
+- Flask backend на `5001`;
+- Vite dev-server на `5173`;
+- SQLite локально;
+- uploads в `app/static/uploads`;
+- React SPA в памяти Vite;
+- legacy `/admin` обслуживается тем же Flask-процессом.
+
+### Production
+
+Рекомендуемая схема:
+
+- Gunicorn или другой WSGI-сервер для Flask;
+- Nginx как reverse proxy;
+- PostgreSQL вместо SQLite;
+- заранее собранный `admin-panel`;
+- постоянное хранилище для `app/static/uploads`.
+
+## Production-Рекомендации
+
+### Flask / WSGI
 
 ```bash
 pip install gunicorn
-gunicorn -w 4 -b 0.0.0.0:8000 "app:create_app()"
+gunicorn -w 4 -b 0.0.0.0:8000 "run:app"
 ```
 
-### Reverse Proxy (Nginx)
+### Nginx
 
 ```nginx
 server {
     listen 80;
-    server_name olmastroy.ru;
+    server_name example.com;
 
     location / {
         proxy_pass http://127.0.0.1:8000;
@@ -99,74 +144,80 @@ server {
     location /static/ {
         alias /path/to/ОлмаСТРОЙ/app/static/;
         expires 30d;
-        add_header Cache-Control "public, immutable";
+        add_header Cache-Control "public";
     }
 }
 ```
 
-### База данных
+### База Данных
 
-Перейти с SQLite на PostgreSQL:
-
-```bash
-pip install psycopg2-binary
-```
+Для production желательно перейти на PostgreSQL:
 
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/olmastroy
 ```
 
-### SSL
+### JWT И Cookies
 
-Использовать Let's Encrypt + Certbot:
+При `ENVIRONMENT=production` backend автоматически включает:
 
-```bash
-sudo certbot --nginx -d olmastroy.ru
-```
+- `JWT_COOKIE_SECURE=True`;
+- `JWT_COOKIE_CSRF_PROTECT=True`.
 
-### Переменные окружения для production
+Это важно учитывать при настройке HTTPS и reverse proxy.
 
-```env
-SECRET_KEY=<сгенерированный-32+-символов>
-DATABASE_URL=postgresql://user:password@localhost:5432/olmastroy
-FLASK_DEBUG=0
-```
+## Uploads И Статические Файлы
+
+Backend ожидает, что каталог `UPLOAD_FOLDER` существует или может быть создан на старте.
+
+Что хранится в `app/static/uploads/`:
+
+- загруженные медиа из SPA;
+- оригиналы изображений;
+- WebP-версии;
+- thumbnails.
+
+Если сервер разворачивается в ephemeral environment, этот каталог нужно вынести на persistent volume или внешний storage.
+
+## Почта
+
+`POST /api/contact` пытается отправлять email-уведомление только если:
+
+- задан `MAIL_USERNAME`;
+- задан получатель `MAIL_RECIPIENT`.
+
+Если почта не настроена, заявки всё равно сохраняются в БД.
 
 ## Бэкапы
 
 ### SQLite
 
 ```bash
-# Копирование файла базы данных
 cp olmastroy.db olmastroy_backup_$(date +%Y%m%d).db
 ```
 
-### PostgreSQL (если перешли)
+### PostgreSQL
 
 ```bash
 pg_dump olmastroy > backup_$(date +%Y%m%d).sql
 ```
 
-## Зависимости
+### Uploads
 
-Файл `requirements.txt` (11 пакетов):
+Не забывайте бэкапить:
 
-```
-Flask==2.3.3
-Flask-SQLAlchemy==3.1.1
-Flask-Login==0.6.3
-Flask-Admin==1.6.1
-Flask-CKEditor==0.5.1
-Flask-Migrate==4.0.5
-Flask-WTF==1.2.1
-python-dotenv==1.0.0
-Werkzeug==2.3.7
-email-validator==2.1.0
-Pillow==10.2.0
+```text
+app/static/uploads/
 ```
 
-Установка:
+## Smoke Check После Деплоя
 
-```bash
-pip install -r requirements.txt
-```
+Проверить вручную:
+
+- `GET /` возвращает публичную главную;
+- `GET /panel/` отдаёт React SPA;
+- логин через `/api/v2/admin/auth/login` работает;
+- `POST /api/contact` сохраняет заявку;
+- `GET /api/v2/admin/dashboard/stats` отвечает для авторизованного пользователя;
+- загрузка файла через `/api/v2/admin/upload` сохраняет файл в uploads;
+- legacy `/admin/` по-прежнему открывается для `is_admin` пользователя.

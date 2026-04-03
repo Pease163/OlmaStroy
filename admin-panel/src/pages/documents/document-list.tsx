@@ -8,10 +8,30 @@ import { ConfirmDialog } from '@/components/confirm-dialog'
 import { documentsApi, type Document } from '@/api/documents'
 import { useCrudList } from '@/hooks/use-crud-list'
 
+function getCategoryLabel(category: string | null) {
+  if (!category) return 'Без категории'
+  return category
+}
+
 const columns: ColumnDef<Document, unknown>[] = [
   { accessorKey: 'id', header: 'ID', size: 60 },
   { accessorKey: 'title', header: 'Название' },
-  { accessorKey: 'category', header: 'Категория', size: 150 },
+  {
+    accessorKey: 'category',
+    header: 'Категория',
+    cell: ({ row }) => getCategoryLabel(row.original.category),
+    size: 210,
+  },
+  {
+    accessorKey: 'is_featured',
+    header: 'Featured',
+    cell: ({ row }) => (
+      <Badge variant={row.original.is_featured ? 'success' : 'outline'}>
+        {row.original.is_featured ? 'Да' : 'Нет'}
+      </Badge>
+    ),
+    size: 110,
+  },
   {
     accessorKey: 'is_visible',
     header: 'Статус',

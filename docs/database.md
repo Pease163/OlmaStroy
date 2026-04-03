@@ -1,184 +1,153 @@
-# База данных
+# База Данных
 
-## ER-диаграмма
+Проект использует SQLAlchemy через Flask-SQLAlchemy. По умолчанию backend работает с SQLite-файлом `olmastroy.db`, но URI может быть переопределён через `DATABASE_URL`.
+
+## Общие Правила
+
+- ORM: SQLAlchemy через `db.Model`;
+- миграции: Flask-Migrate + Alembic;
+- дефолтная БД: SQLite;
+- production-альтернатива: PostgreSQL;
+- часть полей хранит JSON либо в native JSON-колонках, либо в текстовом виде.
+
+## Карта Сущностей
 
 ```mermaid
 erDiagram
-    users {
-        int id PK
-        string username UK "max 80"
-        string email UK "max 120"
-        string password_hash "max 256"
-        boolean is_admin "default false"
-        datetime created_at "default utcnow"
-    }
-
-    blog_posts {
-        int id PK
-        string title "max 200, NOT NULL"
-        string slug UK "max 200, indexed"
-        text content "NOT NULL"
-        string excerpt "max 500"
-        string image_url "max 500"
-        boolean is_published "default false"
-        datetime created_at "default utcnow"
-        datetime updated_at "auto onupdate"
-    }
-
-    vacancies {
-        int id PK
-        string title "max 200, NOT NULL"
-        string location "max 200, NOT NULL"
-        text description "NOT NULL"
-        string salary "max 100"
-        text requirements
-        string employment_type "max 50, default Полная занятость"
-        boolean is_active "default true"
-        datetime created_at "default utcnow"
-    }
-
-    projects {
-        int id PK
-        string title "max 200, NOT NULL"
-        string slug UK "max 200, indexed"
-        string location "max 200"
-        text description
-        text content
-        string image_url "max 500"
-        string category "max 100"
-        int year
-        int order "default 0"
-        boolean is_visible "default true"
-    }
-
-    contact_submissions {
-        int id PK
-        string name "max 100, NOT NULL"
-        string phone "max 30"
-        string email "max 120"
-        text message
-        string subject "max 200"
-        boolean is_read "default false"
-        datetime created_at "default utcnow"
-    }
+    users ||--o{ audit_logs : creates
+    users ||--o{ user_sessions : has
+    users ||--o{ notifications : receives
+    users ||--o{ drafts : owns
+    roles ||--o{ users : assigned_to
+    roles }o--o{ permissions : grants
+    projects ||--o{ project_images : contains
+    blog_posts }o--o{ tags : tagged_with
 ```
 
-> Связей между таблицами нет — каждая модель является самостоятельной сущностью.
+## Контент И Каталог
 
-## Таблицы
+| Таблица | Назначение | Ключевые поля | Где используется |
+|---------|------------|---------------|------------------|
+| `blog_posts` | Статьи блога | `title`, `slug`, `content`, `excerpt`, `image_url`, `is_published`, `publish_at`, SEO-поля | Публичный блог, admin API, legacy admin |
+| `tags` | Теги для блога | `name`, `slug` | Фильтр публичного блога, редактор SPA |
+| `post_tags` | M2M-таблица блог-постов и тегов | `post_id`, `tag_id` | Связка статей и тегов |
+| `vacancies` | Вакансии | `title`, `location`, `description`, `requirements`, `salary`, `employment_type`, `is_active` | Публичные вакансии, admin API, legacy admin |
+| `projects` | Проекты компании | `title`, `slug`, `location`, `description`, `content`, `category`, `year`, `order`, `is_visible`, SEO-поля | Главная, каталог проектов, admin API, legacy admin |
+| `project_images` | Галерея проекта | `project_id`, `image_url`, `caption`, `order` | Лента фото на главной, карточка проекта, SPA project gallery |
+| `services` | Услуги на главной | `title`, `description`, `icon`, `order`, `is_active` | Главная страница и SPA |
+| `documents` | Документы и разрешительная информация | `title`, `description`, `file_url`, `category`, `order`, `is_visible` | Публичная страница `/documents/`, SPA |
+| `testimonials` | Отзывы клиентов и партнёров | `company_name`, `author`, `text`, `image_url`, `rating`, `order`, `is_visible` | Главная, SPA |
+| `equipment` | Каталог техники | `name`, `description`, `image_url`, `category`, `specs`, `is_available`, `order` | Публичная страница `/equipment/`, SPA |
+| `contact_submissions` | Заявки с сайта | `name`, `phone`, `email`, `message`, `subject`, `is_read`, `created_at` | `POST /api/contact`, раздел заявок в SPA и legacy admin |
 
-### `users` — Пользователи
+### Детали По Контентным Сущностям
 
-Хранит учётные записи администраторов. Пароли хешируются через `werkzeug.security`.
+#### `blog_posts`
 
-| Поле | Тип | Constraints | Описание |
-|------|-----|-------------|----------|
-| `id` | Integer | PK, autoincrement | Идентификатор |
-| `username` | String(80) | UNIQUE, NOT NULL | Логин |
-| `email` | String(120) | UNIQUE, NOT NULL | Email |
-| `password_hash` | String(256) | NOT NULL | Хеш пароля (Werkzeug) |
-| `is_admin` | Boolean | default=False | Флаг администратора |
-| `created_at` | DateTime | default=utcnow | Дата регистрации |
+- `slug` генерируется из `title`;
+- публикация регулируется парой `is_published` + `publish_at`;
+- `meta_title` и `meta_description` используются для SEO;
+- связь с `tags` двусторонняя.
 
-**Методы модели:**
-- `set_password(password)` — хеширует и сохраняет пароль
-- `check_password(password)` — проверяет пароль
+#### `projects`
 
-### `blog_posts` — Статьи блога
+- `slug` генерируется из `title`;
+- `order` задаёт ручную сортировку;
+- `is_visible` управляет публикацией на сайте;
+- у проекта может быть и `image_url`, и отдельная галерея `project_images`.
 
-| Поле | Тип | Constraints | Описание |
-|------|-----|-------------|----------|
-| `id` | Integer | PK, autoincrement | Идентификатор |
-| `title` | String(200) | NOT NULL | Заголовок |
-| `slug` | String(200) | UNIQUE, indexed, NOT NULL | URL-адрес (транслит) |
-| `content` | Text | NOT NULL | HTML-контент (CKEditor) |
-| `excerpt` | String(500) | — | Краткое описание |
-| `image_url` | String(500) | — | URL изображения |
-| `is_published` | Boolean | default=False | Статус публикации |
-| `created_at` | DateTime | default=utcnow | Дата создания |
-| `updated_at` | DateTime | auto onupdate | Дата обновления |
+#### `equipment`
 
-**Автогенерация slug:** Метод `generate_slug(title)` транслитерирует кириллицу по собственной таблице `TRANSLIT_MAP` (41 символ). Пример: `«Новые технологии»` → `novye-tekhnologii`.
+- `specs` хранится как текст, фактически ожидается JSON-строка;
+- в публичном каталоге показываются только записи с `is_available=True`.
 
-### `vacancies` — Вакансии
+## Доступ, Безопасность И Сессии
 
-| Поле | Тип | Constraints | Описание |
-|------|-----|-------------|----------|
-| `id` | Integer | PK, autoincrement | Идентификатор |
-| `title` | String(200) | NOT NULL | Название должности |
-| `location` | String(200) | NOT NULL | Местоположение |
-| `description` | Text | NOT NULL | HTML-описание |
-| `salary` | String(100) | — | Зарплата (текстом) |
-| `requirements` | Text | — | HTML-требования |
-| `employment_type` | String(50) | default=«Полная занятость» | Тип занятости |
-| `is_active` | Boolean | default=True | Активна ли вакансия |
-| `created_at` | DateTime | default=utcnow | Дата создания |
+| Таблица | Назначение | Ключевые поля | Где используется |
+|---------|------------|---------------|------------------|
+| `users` | Учётные записи администраторов | `username`, `email`, `password_hash`, `is_admin`, `role_id`, `is_2fa_enabled`, `totp_secret`, `avatar_url`, `last_login`, `is_active` | `/panel`, `/admin`, audit |
+| `roles` | Роли пользователей | `name`, `description`, `is_system` | SPA управление ролями |
+| `permissions` | Отдельные права | `codename`, `name`, `group` | Seed, роли, будущий route-level RBAC |
+| `role_permissions` | M2M ролей и permissions | `role_id`, `permission_id` | RBAC |
+| `user_sessions` | Активные refresh-сессии | `user_id`, `jti`, `ip_address`, `device_info`, `last_active`, `is_active` | `/auth/login`, `/auth/refresh`, раздел sessions |
+| `token_blocklist` | Заблокированные JWT | `jti`, `type`, `created_at` | logout и принудительное завершение сессий |
 
-**Типы занятости:** Полная занятость, Частичная занятость, Вахта, Стажировка.
+### Нюансы
 
-### `projects` — Проекты
+- `users.is_admin` сейчас даёт полный доступ через `@admin_required`;
+- `role_id` и permissions уже существуют и сидируются;
+- `permission_required()` объявлен, но используется не массово, поэтому фактическое разграничение прав пока мягче, чем модель данных.
 
-| Поле | Тип | Constraints | Описание |
-|------|-----|-------------|----------|
-| `id` | Integer | PK, autoincrement | Идентификатор |
-| `title` | String(200) | NOT NULL | Название проекта |
-| `slug` | String(200) | UNIQUE, indexed | URL-адрес (транслит) |
-| `location` | String(200) | — | Местоположение |
-| `description` | Text | — | Краткое описание |
-| `content` | Text | — | Полное HTML-описание |
-| `image_url` | String(500) | — | URL изображения |
-| `category` | String(100) | — | Категория |
-| `year` | Integer | — | Год реализации |
-| `order` | Integer | default=0 | Порядок сортировки |
-| `is_visible` | Boolean | default=True | Видимость на сайте |
+## Операционный Слой CMS
 
-### `contact_submissions` — Заявки
+| Таблица | Назначение | Ключевые поля | Где используется |
+|---------|------------|---------------|------------------|
+| `audit_logs` | История действий | `user_id`, `action`, `entity_type`, `entity_id`, `changes`, `ip_address`, `created_at` | Dashboard activity, история, rollback |
+| `drafts` | Черновики форм | `user_id`, `entity_type`, `entity_id`, `data`, `updated_at` | API автосохранения |
+| `notifications` | Уведомления в SPA | `user_id`, `title`, `message`, `type`, `link`, `is_read` | Колокол уведомлений, список уведомлений |
+| `site_settings` | Настройки сайта | `key`, `value`, `value_type`, `group`, `label`, `description`, `order` | Settings page, runtime-конфигурация контента |
 
-| Поле | Тип | Constraints | Описание |
-|------|-----|-------------|----------|
-| `id` | Integer | PK, autoincrement | Идентификатор |
-| `name` | String(100) | NOT NULL | Имя отправителя |
-| `phone` | String(30) | — | Телефон |
-| `email` | String(120) | — | Email |
-| `message` | Text | — | Сообщение |
-| `subject` | String(200) | — | Тема |
-| `is_read` | Boolean | default=False | Прочитано ли |
-| `created_at` | DateTime | default=utcnow | Дата отправки |
+### `audit_logs`
+
+`changes` хранится как JSON вида:
+
+```json
+{
+  "title": { "old": "Старое", "new": "Новое" },
+  "is_visible": { "old": "False", "new": "True" }
+}
+```
+
+История используется для:
+
+- ленты активности на dashboard;
+- просмотра истории blog posts, vacancies и projects;
+- rollback blog posts по записи аудита.
+
+### `site_settings`
+
+`value_type` поддерживает:
+
+- `string`
+- `text`
+- `boolean`
+- `number`
+- `json`
+
+Typed value вычисляется в модели методом `get_typed_value()`.
+
+## Seed-Данные
+
+`seed.py` создаёт:
+
+- permissions по бизнес-группам;
+- системные роли `Администратор`, `Редактор`, `Наблюдатель`;
+- пользователя `admin`;
+- базовые `site_settings`;
+- стартовые статьи блога;
+- стартовые вакансии;
+- стартовые проекты.
+
+Seed идемпотентен: при повторном запуске существующие записи не дублируются, а часть данных аккуратно обновляется.
 
 ## Миграции
 
-Проект использует **Flask-Migrate** (обёртка над Alembic).
+В репозитории уже есть Alembic-окружение и миграции:
+
+- `234a2a46140b_add_slug_and_content_to_project.py`
+- `c0517f373770_add_project_images_table.py`
+- `eb67fd96667f_add_admin_panel_v2_models_roles_.py`
+
+Базовые команды:
 
 ```bash
-# Инициализация (только при первом запуске)
-flask db init
-
-# Создать миграцию после изменения моделей
-flask db migrate -m "описание изменений"
-
-# Применить миграции
-flask db upgrade
-
-# Откатить последнюю миграцию
-flask db downgrade
+flask --app run.py db upgrade
+flask --app run.py db migrate -m "описание"
+flask --app run.py db downgrade
 ```
 
-## Сидирование
+## Практические Замечания
 
-Скрипт `seed.py` заполняет базу начальными данными:
-
-```bash
-python seed.py
-```
-
-Создаёт:
-- **Администратор:** `admin` / `admin123` (email: `admin@olmastroy.ru`)
-- **3 статьи блога** — КС Байдарацкая, Новые технологии, Расширение географии
-- **3 вакансии** — Инженер-строитель (Калининград), Сварщик НАКС (ЯНАО), Проектировщик ОВиК (Москва)
-- **3 проекта** — КС «Байдарацкая», Сила Сибири, Подземное хранилище газа
-
-Скрипт идемпотентный — при повторном запуске пропускает уже существующие записи.
-
-## Файл базы данных
-
-SQLite-база хранится в файле `olmastroy.db` в корне проекта. Путь задаётся переменной окружения `DATABASE_URL` (по умолчанию: `sqlite:///olmastroy.db`).
+- SQLite подходит для локальной разработки и простого стенда, но ограничен для production-нагрузки.
+- Любое изменение моделей влияет одновременно на публичный сайт, admin API и часто на React SPA.
+- Перед изменением схемы полезно проверить `seed.py`, `app/schemas/`, связанные admin API routes и публичные Jinja-шаблоны.

@@ -1,73 +1,94 @@
-# React + TypeScript + Vite
+# Admin Panel
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React SPA админки проекта ОлмаСТРОЙ. Это приложение собирается в `../app/static/panel` и открывается во Flask по адресу `/panel`.
 
-Currently, two official plugins are available:
+## Назначение
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Панель используется для:
 
-## React Compiler
+- управления блогом, вакансиями и проектами
+- редактирования услуг, документов, отзывов и техники
+- работы с заявками, уведомлениями, аудитом и черновиками
+- настройки пользователей, ролей и параметров сайта
+- загрузки и просмотра медиафайлов
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Стек
 
-## Expanding the ESLint configuration
+- React 19
+- TypeScript
+- Vite
+- React Router
+- TanStack React Query
+- React Hook Form
+- Zod
+- Axios
+- shadcn/ui
+- TipTap
+- Recharts
+- Sonner
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Команды
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
+npm run build
+npm run lint
+npm run preview
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Среда разработки
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Dev server
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- `npm run dev` запускает Vite на `http://localhost:5173`
+- запросы к `/api` проксируются на `http://127.0.0.1:5001`
+- авторизация и API работают через backend Flask
+
+### Production build
+
+- `npm run build` запускает TypeScript build и Vite bundle
+- результат пишется в `../app/static/panel`
+- Flask отдает SPA через catch-all маршруты `/panel/` и `/panel/<path>`
+
+## Архитектура приложения
+
+Ключевые точки кода:
+
+- [`src/App.tsx`](src/App.tsx) - router tree, providers, lazy pages
+- [`src/contexts/auth-context.tsx`](src/contexts/auth-context.tsx) - восстановление сессии, login/logout, 2FA
+- [`src/api/client.ts`](src/api/client.ts) - axios client, bearer token, refresh flow
+- [`src/lib/constants.ts`](src/lib/constants.ts) - API base, nav items, labels
+- [`src/hooks/use-crud-list.ts`](src/hooks/use-crud-list.ts) - списки и удаление
+- [`src/components/layout/app-layout.tsx`](src/components/layout/app-layout.tsx) - защищенная оболочка панели
+- [`src/components/layout/sidebar.tsx`](src/components/layout/sidebar.tsx) - навигация и переходы между разделами
+
+## Работа с backend
+
+Клиент всегда использует `API_BASE = /api/v2/admin`. Важные особенности:
+
+- access token хранится в памяти
+- refresh token приходит cookie
+- при `TOKEN_EXPIRED` запросы повторяются автоматически после refresh
+- при неудачном refresh пользователь переходит на `/panel/login`
+
+## Сборка и встраивание
+
+Vite настроен на:
+
+- `base: /panel/`
+- `outDir: ../app/static/panel`
+- proxy `/api -> 127.0.0.1:5001`
+
+Это означает, что перед проверкой `/panel` нужно:
+
+1. поднять Flask backend
+2. собрать SPA
+3. убедиться, что `app/static/panel/index.html` и asset-файлы созданы
+
+## Где смотреть документацию
+
+- Общая архитектура: [`../docs/architecture.md`](../docs/architecture.md)
+- SPA-админка: [`../docs/admin-panel.md`](../docs/admin-panel.md)
+- API и auth: [`../docs/api.md`](../docs/api.md)
+- Деплой: [`../docs/deploy.md`](../docs/deploy.md)

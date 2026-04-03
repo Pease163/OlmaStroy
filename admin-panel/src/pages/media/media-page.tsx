@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import { uploadApi, type MediaFile } from '@/api/upload'
+import { uploadApi } from '@/api/upload'
 import { useDebounce } from '@/hooks/use-debounce'
 import type { ApiError } from '@/types/api'
 
@@ -81,7 +81,7 @@ export default function MediaPage() {
         <label>
           <input
             type="file"
-            accept="image/*"
+            accept="image/*,application/pdf,.pdf"
             multiple
             className="hidden"
             onChange={handleUpload}

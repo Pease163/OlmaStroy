@@ -30,6 +30,14 @@ export const EMPLOYMENT_TYPES = [
   'Стажировка',
 ] as const
 
+export const DOCUMENT_CATEGORIES = [
+  'Системы менеджмента',
+  'Лицензии',
+  'СРО и реестры',
+  'Квалификация специалистов',
+  'Заключения Газпром газнадзора',
+] as const
+
 export const ACTION_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   create: 'default',
   update: 'secondary',

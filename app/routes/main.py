@@ -5,7 +5,7 @@ from app.models.project_image import ProjectImage
 from app.models.blog import BlogPost
 from app.models.vacancy import Vacancy
 from app.models.service import Service
-from app.models.document import Document
+from app.models.document import Document, DOCUMENT_CATEGORIES
 from app.models.equipment import Equipment
 from app.models.testimonial import Testimonial
 
@@ -59,6 +59,18 @@ SERVICES = [
 ]
 
 
+def _visible_document_categories():
+    categories = {
+        row[0]
+        for row in db.session.query(Document.category).filter(
+            Document.is_visible == True,
+            Document.category.isnot(None),
+            Document.category != '',
+        ).distinct().all()
+    }
+    return [category for category in DOCUMENT_CATEGORIES if category in categories]
+
+
 @main_bp.route('/')
 def index():
     projects = Project.query.filter_by(is_visible=True).order_by(Project.order).all()
@@ -81,7 +93,19 @@ def index():
 
 @main_bp.route('/about/')
 def about():
-    return render_template('about.html')
+    featured_documents = Document.query.filter_by(
+        is_visible=True,
+        is_featured=True,
+    ).order_by(Document.order).limit(4).all()
+    qualification_count = Document.query.filter_by(
+        is_visible=True,
+        category='Квалификация специалистов',
+    ).count()
+    return render_template(
+        'about.html',
+        featured_documents=featured_documents,
+        qualification_count=qualification_count,
+    )
 
 
 @main_bp.route('/projects/')
@@ -119,13 +143,12 @@ def documents():
     if category:
         query = query.filter_by(category=category)
     documents = query.order_by(Document.order).all()
-    categories = db.session.query(Document.category).filter(
-        Document.is_visible == True,
-        Document.category.isnot(None),
-        Document.category != ''
-    ).distinct().all()
-    categories = [c[0] for c in categories]
-    return render_template('documents.html', documents=documents, categories=categories, active_category=category)
+    return render_template(
+        'documents.html',
+        documents=documents,
+        categories=_visible_document_categories(),
+        active_category=category,
+    )
 
 
 @main_bp.route('/equipment/')

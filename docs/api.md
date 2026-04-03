@@ -1,157 +1,65 @@
 # API-документация
 
-## Контактная форма
+Эта группа документов описывает публичный API сайта и admin API, который обслуживает React SPA `/panel`.
 
-### `POST /api/contact`
+## Разделы
 
-Принимает заявку через контактную форму на сайте.
+- [Публичный API](api-public.md) - `POST /api/contact`
+- [Admin API v2](api-admin.md) - `/api/v2/admin/*`
 
-**Content-Type:** `application/json`
+## Общие соглашения
 
-#### Тело запроса
+- Успешные ответы обычно возвращают объект `data`.
+- Списки возвращают `data` и `meta` с пагинацией.
+- Ошибки возвращают `error` с полями `code` и `message`; для ошибок валидации может добавляться `details`.
+- Большинство admin-эндпоинтов защищены JWT и ориентированы на `/panel` как основной интерфейс управления.
+- Legacy Flask-Admin на `/admin` существует отдельно и не входит в этот API-контракт.
 
-| Поле | Тип | Обязательное | Описание |
-|------|-----|:---:|----------|
-| `name` | string | да | Имя отправителя |
-| `phone` | string | нет* | Телефон |
-| `email` | string | нет* | Email |
-| `message` | string | нет | Текст сообщения |
-| `subject` | string | нет | Тема заявки |
+## Форматы ответов
 
-> \* Необходимо указать хотя бы одно из полей: `phone` или `email`.
-
-#### Успешный ответ — `201 Created`
+### Успешный ответ
 
 ```json
 {
-  "success": true,
-  "message": "Заявка успешно отправлена!"
+  "data": {}
 }
 ```
 
-#### Ошибка валидации — `400 Bad Request`
+### Список с пагинацией
 
 ```json
 {
-  "success": false,
-  "error": "Поле \"Имя\" обязательно."
+  "data": [],
+  "meta": {
+    "page": 1,
+    "per_page": 20,
+    "total": 0,
+    "total_pages": 0
+  }
 }
 ```
 
-Возможные сообщения об ошибке:
-- `"Неверный формат данных."` — тело запроса не является JSON
-- `"Поле \"Имя\" обязательно."` — отсутствует `name`
-- `"Укажите телефон или email."` — не указаны ни `phone`, ни `email`
+### Ошибка
 
-#### Примеры curl
-
-**Успешная отправка:**
-
-```bash
-curl -X POST http://localhost:5001/api/contact \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Иван Петров",
-    "phone": "+7 (999) 123-45-67",
-    "email": "ivan@example.com",
-    "message": "Интересует сотрудничество",
-    "subject": "Партнёрство"
-  }'
-```
-
-**Ответ:**
 ```json
-{"success": true, "message": "Заявка успешно отправлена!"}
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Ошибка валидации",
+    "details": {}
+  }
+}
 ```
 
-**Ошибка — без имени:**
+## Основные коды ошибок
 
-```bash
-curl -X POST http://localhost:5001/api/contact \
-  -H "Content-Type: application/json" \
-  -d '{"phone": "+7 (999) 123-45-67"}'
-```
+- `BAD_REQUEST`
+- `VALIDATION_ERROR`
+- `INVALID_CREDENTIALS`
+- `FORBIDDEN`
+- `ACCOUNT_DISABLED`
+- `INVALID_TOKEN`
+- `NOT_FOUND`
+- `NO_PERMISSION`
+- `2FA_REQUIRED`
 
-**Ответ:**
-```json
-{"success": false, "error": "Поле \"Имя\" обязательно."}
-```
-
-**Ошибка — без контактов:**
-
-```bash
-curl -X POST http://localhost:5001/api/contact \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Иван"}'
-```
-
-**Ответ:**
-```json
-{"success": false, "error": "Укажите телефон или email."}
-```
-
----
-
-## Авторизация
-
-Проект использует **Flask-Login** для сессионной аутентификации на основе cookies.
-
-### Поток авторизации
-
-```mermaid
-sequenceDiagram
-    participant B as Браузер
-    participant F as Flask
-    participant DB as SQLite
-
-    B->>F: GET /admin
-    F-->>B: 302 Redirect → /admin/login
-
-    B->>F: GET /admin/login
-    F-->>B: Форма логина
-
-    B->>F: POST /admin/login (username, password)
-    F->>DB: User.query.filter_by(username)
-    DB-->>F: User object
-    F->>F: check_password_hash()
-
-    alt Успех
-        F->>F: login_user(user)
-        F-->>B: 302 Redirect → /admin + Set-Cookie: session
-    else Неверные данные
-        F-->>B: Flash "Неверное имя пользователя или пароль"
-    end
-
-    B->>F: GET /admin (Cookie: session)
-    F->>F: load_user(user_id)
-    F-->>B: Админ-панель
-```
-
-### Защита маршрутов
-
-Админ-панель защищена через `AuthMixin`:
-
-```python
-class AuthMixin:
-    def is_accessible(self):
-        return current_user.is_authenticated and current_user.is_admin
-
-    def inaccessible_callback(self, name, **kwargs):
-        return redirect(url_for('auth.login'))
-```
-
-Все admin-views (`BlogPostView`, `VacancyView`, `ProjectView`, `ContactView`, `UserView`) наследуют `AuthMixin`, проверяя:
-1. Пользователь аутентифицирован (`is_authenticated`)
-2. Пользователь является администратором (`is_admin == True`)
-
-### Endpoints авторизации
-
-| Метод | URL | Описание |
-|-------|-----|----------|
-| GET | `/admin/login` | Форма входа |
-| POST | `/admin/login` | Обработка входа (username + password) |
-| GET | `/admin/logout` | Выход из системы |
-
-### Хранение паролей
-
-Пароли хешируются через `werkzeug.security.generate_password_hash()` (PBKDF2 по умолчанию). Проверка — через `check_password_hash()`.

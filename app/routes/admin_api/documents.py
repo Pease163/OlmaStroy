@@ -10,10 +10,11 @@ from app.routes.admin_api.crud_helpers import (
 document_schema = DocumentSchema()
 documents_schema = DocumentSchema(many=True)
 
-UPDATABLE_FIELDS = ['title', 'description', 'file_url', 'category', 'order', 'is_visible']
+UPDATABLE_FIELDS = ['title', 'description', 'file_url', 'category', 'order', 'is_visible', 'is_featured']
 SEARCH_FIELDS = ['title', 'description']
 FILTER_FIELDS = [
     ('is_visible', 'is_visible', True),
+    ('is_featured', 'is_featured', True),
     ('category', 'category', False),
 ]
 

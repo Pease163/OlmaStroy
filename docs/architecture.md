@@ -1,184 +1,293 @@
-# Архитектура проекта
+# Архитектура Проекта
 
-## Общая схема
+## Общая Схема
 
 ```mermaid
 flowchart LR
-    Browser["🌐 Браузер"]
-    Flask["⚙️ Flask App"]
-    Blueprints["📦 Blueprints"]
-    SQLAlchemy["🗄️ SQLAlchemy"]
-    SQLite["💾 SQLite"]
-    Jinja2["📄 Jinja2"]
-    Static["🎨 Static"]
+    PublicBrowser["Браузер посетителя"]
+    AdminBrowser["Браузер редактора"]
+    Flask["Flask app"]
+    Jinja["Jinja2 templates"]
+    AdminAPI["/api/v2/admin"]
+    React["React SPA /panel"]
+    Legacy["Flask-Admin /admin"]
+    DB["SQLAlchemy + SQLite/PostgreSQL"]
+    Uploads["app/static/uploads"]
+    Mail["SMTP / Flask-Mail"]
 
-    Browser -->|HTTP| Flask
-    Flask --> Blueprints
-    Blueprints -->|Запросы к БД| SQLAlchemy
-    SQLAlchemy -->|SQL| SQLite
-    Blueprints -->|Рендер| Jinja2
-    Jinja2 -->|HTML| Browser
-    Browser -->|CSS/JS/IMG| Static
+    PublicBrowser --> Flask
+    Flask --> Jinja
+    Jinja --> DB
+    Flask --> Uploads
+
+    AdminBrowser --> React
+    React --> AdminAPI
+    AdminAPI --> DB
+    AdminAPI --> Uploads
+
+    AdminBrowser --> Legacy
+    Legacy --> DB
+
+    Flask --> Mail
 ```
 
-## Паттерны
+## Архитектурный Профиль
+
+Проект представляет собой Flask-монолит с тремя интерфейсными слоями:
+
+- server-rendered публичный сайт;
+- React SPA для основной административной работы;
+- legacy Flask-Admin для совместимости.
+
+Ключевой эффект такой структуры: бизнес-данные, аутентификация и работа с файлами централизованы в одном backend, а интерфейсы поверх него могут развиваться независимо.
+
+## Точка Входа И Инициализация
+
+Приложение создаётся через `create_app()` в `app/__init__.py`.
+
+Во время инициализации backend:
+
+- загружает `Config` из `config.py`;
+- создаёт папку загрузок `UPLOAD_FOLDER`;
+- инициализирует `db`, `login_manager`, `migrate`, `jwt`, `limiter`, `ma`, `mail`;
+- подключает JWT handlers и Jinja filters;
+- регистрирует blueprints;
+- инициализирует Flask-Admin;
+- настраивает SPA catch-all для `/panel/`;
+- регистрирует error handlers `404` и `500`.
+
+Dev entrypoint: `run.py`, порт по умолчанию `5001`.
+
+## HTTP-Поверхности
+
+### 1. Публичный сайт
+
+Blueprints:
+
+| Blueprint | Prefix | Ответ |
+|-----------|--------|-------|
+| `main` | `/` | Jinja-страницы: главная, about, projects, documents, equipment, robots, sitemap |
+| `blog` | `/blog` | Список и детали статей |
+| `vacancies` | `/vacancies` | Список и детали вакансий |
+| `api` | `/api` | Публичный JSON endpoint контактной формы |
+
+Публичный слой тянет данные напрямую из SQLAlchemy-моделей и рендерит HTML через `render_template()`.
+
+### 2. Основная админка
+
+Основной admin UI состоит из двух частей:
+
+- React SPA, собранная в `app/static/panel/` и доступная по `/panel/`;
+- backend API под `/api/v2/admin`.
+
+Flask только раздаёт собранный SPA bundle и отдаёт `index.html` для внутренних маршрутов React Router.
+
+### 3. Legacy-админка
+
+`/admin/` построен на Flask-Admin и покрывает только ограниченный набор сущностей:
+
+- BlogPost
+- Vacancy
+- Project
+- ContactSubmission
+- User
+
+Этот контур полезен как резервный интерфейс и как исторически ранняя админка, но не отражает полный функционал проекта.
+
+## Аутентификация И Авторизация
+
+### Публичный сайт
+
+Анонимный доступ. Исключение: форма входа в legacy `/admin/login`.
+
+### Legacy `/admin`
+
+Используется `Flask-Login`:
+
+- логин через `/admin/login`;
+- загрузка пользователя через `login_manager.user_loader`;
+- защита Flask-Admin views через `AuthMixin`;
+- условие доступа: `current_user.is_authenticated and current_user.is_admin`.
+
+### `/panel` и `/api/v2/admin`
+
+Используется JWT-авторизация:
+
+- access token отдаётся в JSON и хранится клиентом в памяти;
+- refresh token устанавливается cookie;
+- refresh flow обслуживается `/api/v2/admin/auth/refresh`;
+- logout пишет JTI в `TokenBlocklist`;
+- 2FA реализована на TOTP через `pyotp` и QR-код через `qrcode`;
+- login rate limit берётся из `AUTH_RATE_LIMIT`.
+
+Текущий нюанс реализации:
+
+- route-level защита построена в основном на `@admin_required`;
+- модельные `Role` и `Permission` уже есть;
+- декоратор `permission_required()` объявлен, но массово в маршрутах пока не применяется.
+
+## Слой Данных
+
+SQLAlchemy-модели делятся на четыре группы:
+
+- контент и каталог: `BlogPost`, `Project`, `ProjectImage`, `Vacancy`, `Service`, `Document`, `Testimonial`, `Equipment`, `Tag`;
+- заявки и коммуникация: `ContactSubmission`, `Notification`;
+- доступ и безопасность: `User`, `Role`, `Permission`, `UserSession`, `TokenBlocklist`;
+- операционный слой CMS: `AuditLog`, `Draft`, `SiteSetting`.
+
+Подробнее см. [database.md](database.md).
+
+## Повторно Используемые Backend-Паттерны
 
 ### Application Factory
 
-Приложение создаётся через функцию `create_app()` в `app/__init__.py`. Это позволяет:
-- Создавать несколько экземпляров приложения (тестирование)
-- Конфигурировать приложение через разные классы конфигурации
-- Инициализировать расширения без циклических импортов
+Позволяет:
 
-### Blueprints
-
-Маршруты разделены на модули (blueprints) по функциональным областям:
-
-| Blueprint | Prefix | Файл | Назначение |
-|-----------|--------|------|------------|
-| `main` | `/` | `app/routes/main.py` | Главная, О нас, Проекты, robots.txt, sitemap.xml |
-| `blog` | `/blog` | `app/routes/blog.py` | Список статей, детальная статья |
-| `vacancies` | `/vacancies` | `app/routes/vacancies.py` | Список вакансий, детальная вакансия |
-| `auth` | `/` | `app/routes/auth.py` | Логин/логаут администратора |
-| `api` | `/api` | `app/routes/api.py` | REST API контактной формы |
-| Flask-Admin | `/admin` | `app/admin/views.py` | Административная панель |
-
-### Jinja2 Template Inheritance
-
-Все страницы наследуют базовый шаблон `base.html`, переопределяя нужные блоки. Общие элементы (header, footer, карточки) вынесены в компоненты.
+- создавать приложение для shell, тестов и CLI;
+- централизованно инициализировать extensions;
+- избегать ранних циклических импортов.
 
 ### Extensions Pattern
 
-Расширения Flask создаются в `app/extensions.py` без привязки к приложению, а затем инициализируются в фабрике через `ext.init_app(app)`.
+Инстансы extensions живут в `app/extensions.py` и подключаются позже через `init_app()`.
 
-## Структура директорий
+### Generic CRUD Helpers
 
-```
-ОлмаСТРОЙ/
-├── app/                          # Пакет приложения
-│   ├── __init__.py               # Application Factory (create_app)
-│   ├── extensions.py             # Инстансы Flask-расширений (db, login_manager, migrate, ckeditor)
-│   ├── utils.py                  # Утилиты (process_image — обработка изображений)
-│   │
-│   ├── models/                   # SQLAlchemy-модели
-│   │   ├── __init__.py           # Реэкспорт всех моделей
-│   │   ├── user.py               # User (аутентификация)
-│   │   ├── blog.py               # BlogPost (статьи блога)
-│   │   ├── vacancy.py            # Vacancy (вакансии)
-│   │   ├── project.py            # Project (проекты)
-│   │   └── contact.py            # ContactSubmission (заявки)
-│   │
-│   ├── routes/                   # Маршруты (blueprints)
-│   │   ├── __init__.py           # register_blueprints()
-│   │   ├── main.py               # Главная, О нас, Проекты, SEO
-│   │   ├── blog.py               # Блог
-│   │   ├── vacancies.py          # Вакансии
-│   │   ├── auth.py               # Авторизация
-│   │   └── api.py                # REST API
-│   │
-│   ├── admin/                    # Административная панель
-│   │   ├── __init__.py           # init_admin() — регистрация views
-│   │   └── views.py              # ModelView для каждой модели
-│   │
-│   ├── templates/                # Jinja2-шаблоны
-│   │   ├── base.html             # Базовый шаблон (12 блоков)
-│   │   ├── index.html            # Главная страница
-│   │   ├── about.html            # О компании
-│   │   ├── sitemap.xml           # XML-карта сайта (шаблон)
-│   │   ├── components/           # Переиспользуемые компоненты
-│   │   │   ├── _header.html      # Шапка + навигация
-│   │   │   ├── _footer.html      # Подвал
-│   │   │   ├── _ticker.html      # Бегущая строка
-│   │   │   ├── _breadcrumbs.html # Хлебные крошки (макрос)
-│   │   │   ├── _pagination.html  # Пагинация (макрос)
-│   │   │   ├── _blog_card.html   # Карточка статьи (макрос)
-│   │   │   ├── _vacancy_card.html# Карточка вакансии (макрос)
-│   │   │   ├── _project_card.html# Карточка проекта (макрос)
-│   │   │   └── _picture.html     # WebP-картинка с fallback (макрос)
-│   │   ├── blog/                 # Шаблоны блога
-│   │   │   ├── list.html
-│   │   │   └── detail.html
-│   │   ├── vacancies/            # Шаблоны вакансий
-│   │   │   ├── list.html
-│   │   │   └── detail.html
-│   │   ├── projects/             # Шаблоны проектов
-│   │   │   ├── list.html
-│   │   │   └── detail.html
-│   │   ├── auth/                 # Шаблон логина
-│   │   │   └── login.html
-│   │   ├── admin/                # Шаблоны админки
-│   │   │   ├── master.html
-│   │   │   ├── index.html
-│   │   │   ├── blog_create.html
-│   │   │   ├── blog_edit.html
-│   │   │   ├── vacancy_create.html
-│   │   │   └── vacancy_edit.html
-│   │   └── errors/               # Страницы ошибок
-│   │       ├── 404.html
-│   │       └── 500.html
-│   │
-│   └── static/                   # Статические файлы
-│       ├── css/
-│       │   ├── style.css         # Основные стили (~1419 строк)
-│       │   └── admin-custom.css  # Стили админки
-│       ├── js/
-│       │   ├── main.js           # Основной JavaScript (11 функций)
-│       │   └── mobile-nav.js     # Мобильная навигация
-│       └── img/
-│           ├── logo.svg          # Логотип
-│           ├── logo-icon.svg     # Иконка логотипа
-│           ├── og-default.jpg    # OG-изображение по умолчанию
-│           ├── hero-bg.jpg       # Фон героя
-│           ├── hero-bg.webp      # Фон героя (WebP)
-│           └── projects/         # Изображения проектов (JPG + WebP)
-│
-├── migrations/                   # Alembic миграции
-├── docs/                         # Документация
-├── config.py                     # Конфигурация приложения
-├── run.py                        # Точка входа (запуск dev-сервера, порт 5001)
-├── seed.py                       # Начальные данные (admin + контент)
-├── requirements.txt              # Python-зависимости (11 пакетов)
-├── .env                          # Переменные окружения
-└── olmastroy.db                  # Файл базы данных SQLite
-```
+`app/routes/admin_api/crud_helpers.py` даёт общий слой для:
 
-## Схема взаимодействия
+- пагинации;
+- стандартных JSON-ответов;
+- create/update/delete;
+- bulk delete и bulk toggle;
+- истории изменений через audit log.
+
+Это делает admin API консистентным и снижает дублирование между route-модулями.
+
+### Schema-Driven Validation
+
+Marshmallow-схемы в `app/schemas/` отвечают за:
+
+- валидацию входных данных;
+- сериализацию JSON-ответов;
+- ограничение dump/load полей.
+
+## Служебные Подсистемы
+
+### Audit Log
+
+Каждое значимое действие в admin API может писать запись в `AuditLog` через `log_action()`:
+
+- create;
+- update;
+- delete;
+- login;
+- logout;
+- rollback отдельных сущностей.
+
+### Drafts
+
+Черновики хранятся в таблице `drafts` и доступны через `/api/v2/admin/drafts/<entity_type>/<entity_id>`.
+
+### Search
+
+Глобальный поиск агрегирует результаты по blog posts, vacancies, projects и contacts и возвращает ссылки прямо на SPA-маршруты.
+
+### Uploads И Image Pipeline
+
+Загруженные файлы кладутся в `app/static/uploads/`.
+
+Для изображений backend:
+
+- сохраняет оригинал;
+- пытается сделать WebP-версию;
+- генерирует thumbnail;
+- использует тот же пайплайн в `import_photos.py`.
+
+### Mail
+
+Публичная форма `POST /api/contact` сохраняет заявку в БД и пытается отправить email-уведомление через Flask-Mail, если SMTP-настройки заданы.
+
+## Потоки Запросов
+
+### Публичная страница
 
 ```mermaid
-flowchart TD
-    Request["HTTP Request"]
-    Route["Route (Blueprint)"]
-    Model["Model (SQLAlchemy)"]
-    Template["Template (Jinja2)"]
-    Static["Static Files"]
-    Response["HTTP Response"]
+sequenceDiagram
+    participant B as Browser
+    participant R as Public route
+    participant M as SQLAlchemy models
+    participant T as Jinja template
 
-    Request --> Route
-    Route -->|"Запрос данных"| Model
-    Model -->|"Объекты"| Route
-    Route -->|"render_template()"| Template
-    Template -->|"url_for('static')"| Static
-    Template --> Response
+    B->>R: GET /projects/
+    R->>M: Query projects/categories
+    M-->>R: rows
+    R->>T: render_template(...)
+    T-->>B: HTML
 ```
 
-## Расширения Flask
+### SPA-админка
 
-| Расширение | Инстанс | Назначение |
-|-----------|---------|------------|
-| Flask-SQLAlchemy | `db` | ORM, работа с базой данных |
-| Flask-Login | `login_manager` | Сессионная аутентификация |
-| Flask-Migrate | `migrate` | Миграции базы данных (Alembic) |
-| Flask-CKEditor | `ckeditor` | WYSIWYG-редактор в админке |
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant SPA as React /panel
+    participant API as /api/v2/admin
+    participant DB as DB
 
-Все инстансы создаются в `app/extensions.py` и инициализируются в `create_app()`.
+    B->>SPA: GET /panel/projects
+    SPA->>API: GET /api/v2/admin/projects
+    API->>DB: Query with pagination/search/filter
+    DB-->>API: rows
+    API-->>SPA: JSON {data, meta}
+    SPA-->>B: Rendered page
+```
 
-## Кастомные Jinja2-фильтры
+### Логин В `/panel`
 
-| Фильтр | Пример | Результат |
-|--------|--------|-----------|
-| `ru_date` | `{{ post.created_at\|ru_date }}` | `15 января 2025` |
-| `reading_time` | `{{ post.content\|reading_time }}` | `3 мин.` |
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant SPA as React login
+    participant API as Auth API
+    participant DB as DB
 
-## Context Processor
+    B->>SPA: Submit username/password
+    SPA->>API: POST /auth/login
+    API->>DB: Load user, verify password, optional TOTP
+    API-->>SPA: access token + refresh cookie
+    SPA->>API: GET /auth/me
+    API-->>SPA: current user
+```
 
-Функция `inject_now()` добавляет `now` (текущее время) во все шаблоны. Используется в футере для отображения года: `© 2006—{{ now().year }}`.
+## Структура Репозитория
+
+```text
+app/
+  __init__.py          фабрика приложения и SPA catch-all
+  extensions.py        db, login_manager, migrate, jwt, limiter, ma, mail
+  models/              SQLAlchemy-модели
+  schemas/             Marshmallow-схемы
+  routes/              публичные и admin API blueprints
+  admin/               Flask-Admin
+  services/            audit helpers
+  templates/           Jinja templates и email templates
+  static/              CSS, JS, изображения, uploads, built SPA
+
+admin-panel/
+  src/api/             client и feature APIs
+  src/pages/           страницы SPA
+  src/components/      layout, tables, editors, shared UI
+  src/hooks/           CRUD hooks, debounce, auth helpers
+  src/contexts/        auth/theme/sidebar contexts
+
+migrations/
+  Alembic env и версии миграций
+```
+
+## Что Важно Учитывать При Разработке
+
+- `/panel` и `/admin` используют разные auth-механизмы;
+- не весь RBAC пока enforced на уровне route decorators;
+- SPA зависит от build output в `app/static/panel`;
+- часть публичного фронтенда и legacy-админки зависит от внешних CDN;
+- админский API и публичный сайт используют одни и те же модели, поэтому изменения схемы сразу затрагивают оба контура.

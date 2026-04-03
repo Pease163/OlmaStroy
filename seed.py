@@ -240,12 +240,15 @@ def seed():
             projects = [
                 Project(title='КС «Байдарацкая»', location='ЯНАО',
                         description='Строительство компрессорной станции мощностью 32 МВт.',
+                        image_url='/static/uploads/ks-baydaratskaya/baydaratskaya.jpg',
                         category='Компрессорные станции', year=2020, order=1, is_visible=True),
                 Project(title='Сила Сибири', location='Иркутская область',
                         description='Участие в строительстве магистрального газопровода.',
+                        image_url='/static/uploads/sila-sibiri/sila-sibiri.jpg',
                         category='Магистральные газопроводы', year=2022, order=2, is_visible=True),
                 Project(title='Подземное хранилище газа', location='Калининградская область',
                         description='Строительство наземной инфраструктуры ПХГ.',
+                        image_url='/static/uploads/kaliningradskoe-upkhg/kaliningradskoe-upkhg.jpg',
                         category='Хранилища газа', year=2023, order=3, is_visible=True),
             ]
             db.session.add_all(projects)

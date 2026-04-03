@@ -1,21 +1,25 @@
 {% extends "base.html" %}
 {% from "components/_breadcrumbs.html" import breadcrumbs %}
 
-{% block title %}Документы и лицензии{% endblock %}
-{% block meta_description %}Документы, лицензии и сертификаты ООО ОлмаСтрой{% endblock %}
+{% block title %}Документы и допуски{% endblock %}
+{% block meta_description %}Документы, лицензии, сертификаты, СРО, НРС специалистов и заключения Газпром газнадзора ООО ОлмаСтрой{% endblock %}
 
 {% block content %}
-{{ breadcrumbs([{'title': 'Документы и лицензии'}]) }}
+{{ breadcrumbs([{'title': 'Документы и допуски'}]) }}
 
 <section class="page-hero">
     <div class="container">
-        <h1 class="reveal">Документы и лицензии</h1>
-        <p class="reveal">Все необходимые допуски и сертификаты для работы на объектах повышенной опасности</p>
+        <h1 class="reveal">Документы и допуски</h1>
+        <p class="reveal">Публичный архив лицензий, сертификатов систем менеджмента, документов СРО, подтверждений НРС специалистов и заключений Газпром газнадзора</p>
     </div>
 </section>
 
 <section class="section--default">
     <div class="container">
+        <div class="documents-intro reveal">
+            <p>В архиве размещены корпоративные документы компании и подтверждения квалификации ключевых специалистов в формате PDF. Все файлы открываются в новой вкладке.</p>
+        </div>
+
         {% if categories %}
         <div class="filter-tags reveal">
             <a href="{{ url_for('main.documents') }}" class="filter-tag {{ 'active' if not active_category }}">Все</a>
@@ -27,16 +31,20 @@
 
         <div class="docs-grid">
             {% for doc in documents %}
-            <a href="{{ doc.file_url }}" target="_blank" class="doc-item reveal">
+            <a href="{{ doc.file_url }}" target="_blank" rel="noopener" class="doc-item reveal">
                 <span class="doc-item__num">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                 </span>
-                <div>
+                <div class="doc-item__content">
+                    {% if doc.category %}
+                    <span class="doc-item__meta">{{ doc.category }}</span>
+                    {% endif %}
                     <strong>{{ doc.title }}</strong>
                     {% if doc.description %}
-                    <p style="margin: 5px 0 0; font-size: 0.9rem; color: #666;">{{ doc.description }}</p>
+                    <p class="doc-item__description">{{ doc.description }}</p>
                     {% endif %}
                 </div>
+                <span class="doc-item__action">PDF</span>
             </a>
             {% endfor %}
         </div>
